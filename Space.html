@@ -1,0 +1,2194 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>🚀 우주 화물선 - 별빛 배송</title>
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#070b18;color:#fff;font-family:Arial,Helvetica,sans-serif}
+body{display:flex;align-items:center;justify-content:center}
+#wrap{position:relative;width:100vw;height:100vh;overflow:hidden;background:radial-gradient(circle at 50% 20%,#17245a 0,#0b1130 42%,#050813 100%)}
+canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+
+#hud{
+  position:absolute;
+  top:12px;
+  left:12px;
+  right:12px;
+  display:flex;
+  gap:10px;
+  justify-content:space-between;
+  align-items:flex-start;
+  pointer-events:none
+}
+
+.box{
+  background:rgba(8,13,31,.78);
+  border:1px solid rgba(255,255,255,.14);
+  box-shadow:0 8px 30px rgba(0,0,0,.22);
+  backdrop-filter:blur(8px);
+  border-radius:14px;
+  padding:10px 14px
+}
+
+#leftHud,#rightHud{display:flex;gap:10px;flex-wrap:wrap}
+.stat{min-width:105px}
+.label{font-size:11px;opacity:.65}
+.value{font-size:18px;font-weight:700;margin-top:2px}
+
+.bar{
+  margin-top:6px;
+  height:8px;
+  border-radius:99px;
+  background:rgba(255,255,255,.1);
+  overflow:hidden;
+  width:140px
+}
+.fill{
+  height:100%;
+  width:100%;
+  background:linear-gradient(90deg,#53e0ff,#7b6cff);
+  border-radius:99px
+}
+
+#overlay{
+  position:absolute;
+  inset:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:rgba(2,4,14,.42);
+  backdrop-filter:blur(4px);
+  z-index:10
+}
+
+.panel{
+  width:min(92vw,560px);
+  padding:28px;
+  border-radius:24px;
+  background:rgba(10,17,43,.94);
+  border:1px solid rgba(255,255,255,.15);
+  box-shadow:0 25px 80px rgba(0,0,0,.45);
+  text-align:center
+}
+
+h1{
+  margin:0 0 8px;
+  font-size:clamp(32px,6vw,58px);
+  letter-spacing:-2px
+}
+
+.sub{
+  opacity:.76;
+  line-height:1.6;
+  margin:0 0 20px
+}
+
+button{
+  border:0;
+  border-radius:14px;
+  padding:13px 20px;
+  font-size:16px;
+  font-weight:700;
+  cursor:pointer;
+  color:#06101b;
+  background:linear-gradient(135deg,#77f2ff,#9a8cff);
+  box-shadow:0 8px 24px rgba(98,178,255,.22)
+}
+
+button.secondary{
+  margin-left:8px;
+  background:rgba(255,255,255,.09);
+  color:#fff;
+  border:1px solid rgba(255,255,255,.14);
+  box-shadow:none
+}
+
+.small{
+  font-size:12px;
+  opacity:.58;
+  margin-top:16px
+}
+
+#message{
+  margin:10px 0 18px;
+  font-size:19px;
+  font-weight:700;
+  min-height:26px
+}
+
+/* 상점 */
+#shopOverlay{
+  position:absolute;
+  inset:0;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  background:rgba(2,4,14,.58);
+  backdrop-filter:blur(7px);
+  z-index:20
+}
+
+.shopPanel{
+  width:min(94vw,900px);
+  max-height:90vh;
+  overflow:auto;
+  padding:26px;
+  border-radius:24px;
+  background:rgba(10,17,43,.97);
+  border:1px solid rgba(255,255,255,.15);
+  box-shadow:0 25px 80px rgba(0,0,0,.5)
+}
+
+.shopTitle{
+  text-align:center;
+  font-size:36px;
+  font-weight:800;
+  margin-bottom:6px
+}
+
+.shopMoney{
+  text-align:center;
+  font-size:22px;
+  font-weight:800;
+  margin-bottom:22px;
+  color:#7ff5ff
+}
+
+.shopGrid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:14px
+}
+
+.shopCard{
+  background:rgba(255,255,255,.055);
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:18px;
+  padding:18px
+}
+
+.shopIcon{
+  font-size:34px;
+  margin-bottom:5px
+}
+
+.shopName{
+  font-size:21px;
+  font-weight:800;
+}
+
+.shopDesc{
+  font-size:13px;
+  opacity:.68;
+  line-height:1.5;
+  min-height:42px;
+  margin:7px 0 12px
+}
+
+.shopLevel{
+  font-size:14px;
+  opacity:.8;
+  margin-bottom:10px
+}
+
+.shopCost{
+  font-size:16px;
+  font-weight:800;
+  margin-bottom:10px
+}
+
+.buyBtn{
+  width:100%;
+  margin:0
+}
+
+.buyBtn:disabled{
+  opacity:.38;
+  cursor:not-allowed;
+  filter:grayscale(.5)
+}
+
+.shopBottom{
+  display:flex;
+  justify-content:center;
+  margin-top:20px
+}
+
+/* 모바일 */
+#touch{
+  position:absolute;
+  bottom:16px;
+  left:16px;
+  right:16px;
+  display:none;
+  justify-content:space-between;
+  align-items:end;
+  pointer-events:none;
+  z-index:5
+}
+
+.pad{
+  display:grid;
+  grid-template-columns:58px 58px 58px;
+  grid-template-rows:58px 58px 58px;
+  gap:6px;
+  pointer-events:auto
+}
+
+.pad button{
+  padding:0;
+  font-size:24px;
+  width:58px;
+  height:58px;
+  border-radius:16px;
+  background:rgba(255,255,255,.12);
+  color:#fff;
+  border:1px solid rgba(255,255,255,.14);
+  box-shadow:none
+}
+
+.pad .blank{visibility:hidden}
+
+.action{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  pointer-events:auto
+}
+
+.action button{
+  padding:12px 15px;
+  background:rgba(255,255,255,.12);
+  color:#fff;
+  border:1px solid rgba(255,255,255,.14);
+  box-shadow:none
+}
+
+@media(max-width:800px){
+  #touch{display:flex}
+  .stat{min-width:86px}
+  .bar{width:110px}
+  .value{font-size:16px}
+  .panel{padding:22px}
+  .shopGrid{grid-template-columns:1fr}
+  .shopPanel{padding:20px}
+}
+</style>
+</head>
+
+<body>
+<div id="wrap">
+
+<canvas id="game"></canvas>
+
+<div id="hud" hidden>
+  <div id="leftHud">
+    <div class="box stat">
+      <div class="label">LEVEL</div>
+      <div class="value" id="level">1</div>
+    </div>
+
+    <div class="box stat">
+      <div class="label">CREDITS</div>
+      <div class="value" id="money">0</div>
+    </div>
+
+    <div class="box stat">
+      <div class="label">DELIVERED</div>
+      <div class="value" id="delivered">0 / 3</div>
+    </div>
+  </div>
+
+  <div id="rightHud">
+    <div class="box stat">
+      <div class="label">HULL</div>
+      <div class="value" id="hpText">100%</div>
+      <div class="bar">
+        <div class="fill" id="hpBar"></div>
+      </div>
+    </div>
+
+    <div class="box stat">
+      <div class="label">FUEL</div>
+      <div class="value" id="fuelText">100%</div>
+      <div class="bar">
+        <div class="fill" id="fuelBar"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 메인 메뉴 -->
+<div id="overlay">
+  <div class="panel">
+    <h1 id="title">🚀 별빛 배송</h1>
+
+    <p class="sub" id="subtitle">
+      작은 우주 화물선으로 위험한 성운을 뚫고<br>
+      화물을 행성까지 배달하세요.
+    </p>
+
+    <div id="message">
+      WASD로 이동 · 운석을 피하고 · 파란 화물을 모아 배달!
+    </div>
+
+    <button id="startBtn">게임 시작</button>
+    <button id="shopBtn" class="secondary">🛒 우주 정거장 상점</button>
+    <button id="backBtn" class="secondary" onclick="goHome()">홈으로</button>
+
+    <div class="small">
+      PC: WASD / 모바일: 화면 버튼 · P: 일시정지
+    </div>
+  </div>
+</div>
+
+<!-- 상점 -->
+<div id="shopOverlay">
+  <div class="shopPanel">
+
+    <div class="shopTitle">🛒 우주 정거장 상점</div>
+
+    <div class="shopMoney">
+      💰 보유 크레딧:
+      <span id="shopMoney">0</span>
+    </div>
+
+    <div class="shopGrid">
+
+      <div class="shopCard">
+        <div class="shopIcon">🚀</div>
+        <div class="shopName">엔진 강화</div>
+
+        <div class="shopDesc">
+          화물선의 최고 속도와 가속도를 올립니다.<br>
+          위험한 운석 지대를 더 빠르게 통과할 수 있습니다.
+        </div>
+
+        <div class="shopLevel">
+          현재 레벨:
+          <b id="engineLevel">0</b>
+        </div>
+
+        <div class="shopCost">
+          가격:
+          <span id="engineCost">750</span> 크레딧
+        </div>
+
+        <button class="buyBtn" id="buyEngine">
+          엔진 업그레이드
+        </button>
+      </div>
+
+      <div class="shopCard">
+        <div class="shopIcon">🛡️</div>
+        <div class="shopName">선체 강화</div>
+
+        <div class="shopDesc">
+          최대 체력을 증가시킵니다.<br>
+          운석에 맞아도 더 오래 버틸 수 있습니다.
+        </div>
+
+        <div class="shopLevel">
+          현재 레벨:
+          <b id="hullLevel">0</b>
+        </div>
+
+        <div class="shopCost">
+          가격:
+          <span id="hullCost">700</span> 크레딧
+        </div>
+
+        <button class="buyBtn" id="buyHull">
+          선체 업그레이드
+        </button>
+      </div>
+
+      <div class="shopCard">
+        <div class="shopIcon">⛽</div>
+        <div class="shopName">연료 탱크 강화</div>
+
+        <div class="shopDesc">
+          최대 연료를 증가시킵니다.<br>
+          더 오래 비행하고 부스트를 더 많이 사용할 수 있습니다.
+        </div>
+
+        <div class="shopLevel">
+          현재 레벨:
+          <b id="fuelLevel">0</b>
+        </div>
+
+        <div class="shopCost">
+          가격:
+          <span id="fuelCost">600</span> 크레딧
+        </div>
+
+        <button class="buyBtn" id="buyFuel">
+          연료 탱크 업그레이드
+        </button>
+      </div>
+
+      <div class="shopCard">
+        <div class="shopIcon">📦</div>
+        <div class="shopName">배송 보너스 강화</div>
+
+        <div class="shopDesc">
+          화물을 행성에 배달할 때 받는 크레딧을 증가시킵니다.<br>
+          많이 배달할수록 더 빠르게 부자가 됩니다.
+        </div>
+
+        <div class="shopLevel">
+          현재 레벨:
+          <b id="cargoLevel">0</b>
+        </div>
+
+        <div class="shopCost">
+          가격:
+          <span id="cargoCost">900</span> 크레딧
+        </div>
+
+        <button class="buyBtn" id="buyCargo">
+          배송 보너스 업그레이드
+        </button>
+      </div>
+
+    </div>
+
+    <div class="shopBottom">
+      <button id="closeShop">상점 나가기</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- 모바일 조작 -->
+<div id="touch">
+  <div class="pad">
+    <button class="blank"></button>
+    <button data-key="w">▲</button>
+    <button class="blank"></button>
+
+    <button data-key="a">◀</button>
+    <button data-key="s">▼</button>
+    <button data-key="d">▶</button>
+
+    <button class="blank"></button>
+    <button class="blank"></button>
+    <button class="blank"></button>
+  </div>
+
+  <div class="action">
+    <button id="boostBtn">⚡ 부스트</button>
+    <button id="pauseBtn">Ⅱ</button>
+  </div>
+</div>
+
+</div>
+
+<script>
+const canvas=document.getElementById('game');
+const ctx=canvas.getContext('2d');
+
+const W=1200,H=700;
+
+let vw=innerWidth;
+let vh=innerHeight;
+let dpr=Math.min(devicePixelRatio||1,2);
+
+function resize(){
+  vw=innerWidth;
+  vh=innerHeight;
+  dpr=Math.min(devicePixelRatio||1,2);
+
+  canvas.width=Math.floor(vw*dpr);
+  canvas.height=Math.floor(vh*dpr);
+
+  canvas.style.width=vw+'px';
+  canvas.style.height=vh+'px';
+
+  ctx.setTransform(
+    dpr*vw/W,
+    0,
+    0,
+    dpr*vh/H,
+    0,
+    0
+  );
+}
+
+addEventListener('resize',resize);
+resize();
+
+/* =========================
+   키보드
+========================= */
+
+const keys={};
+
+addEventListener('keydown',e=>{
+  const k=e.key.toLowerCase();
+
+  keys[k]=true;
+
+  if([
+    'w','a','s','d',
+    'arrowup','arrowdown',
+    'arrowleft','arrowright',
+    ' '
+  ].includes(k)){
+    e.preventDefault();
+  }
+
+  if(k==='p'){
+    togglePause();
+  }
+});
+
+addEventListener('keyup',e=>{
+  keys[e.key.toLowerCase()]=false;
+});
+
+/* =========================
+   모바일 버튼
+========================= */
+
+document.querySelectorAll('[data-key]').forEach(b=>{
+  const k=b.dataset.key;
+
+  b.addEventListener('pointerdown',e=>{
+    e.preventDefault();
+    keys[k]=true;
+  });
+
+  b.addEventListener('pointerup',()=>{
+    keys[k]=false;
+  });
+
+  b.addEventListener('pointercancel',()=>{
+    keys[k]=false;
+  });
+
+  b.addEventListener('pointerleave',()=>{
+    keys[k]=false;
+  });
+});
+
+document.getElementById('boostBtn').addEventListener('pointerdown',()=>{
+  boost=true;
+});
+
+document.getElementById('boostBtn').addEventListener('pointerup',()=>{
+  boost=false;
+});
+
+document.getElementById('boostBtn').addEventListener('pointercancel',()=>{
+  boost=false;
+});
+
+document.getElementById('pauseBtn').onclick=()=>{
+  togglePause();
+};
+
+/* =========================
+   게임 변수
+========================= */
+
+let state='menu';
+let last=0;
+let boost=false;
+
+let level=1;
+
+/* 기존 기록과 연결 */
+let money=Number(
+  localStorage.getItem('starlightMoney') ??
+  localStorage.getItem('starlightCredits') ??
+  0
+);
+
+let player;
+let packages;
+let meteors;
+let stars;
+let particles;
+let station;
+let goal;
+let delivered;
+let spawnTimer;
+let starTimer;
+let camShake;
+let worldTime;
+
+/* =========================
+   업그레이드 저장
+========================= */
+
+let upgrades={
+  engine:0,
+  hull:0,
+  fuel:0,
+  cargo:0
+};
+
+try{
+  const saved=JSON.parse(
+    localStorage.getItem('starlightUpgrades')||'null'
+  );
+
+  if(saved){
+    upgrades.engine=Number(saved.engine)||0;
+    upgrades.hull=Number(saved.hull)||0;
+    upgrades.fuel=Number(saved.fuel)||0;
+    upgrades.cargo=Number(saved.cargo)||0;
+  }
+}catch(e){}
+
+let highScore=Math.max(
+  Number(localStorage.getItem('starlightCredits')||0),
+  money
+);
+
+function saveGameData(){
+  localStorage.setItem(
+    'starlightMoney',
+    String(Math.floor(money))
+  );
+
+  localStorage.setItem(
+    'starlightCredits',
+    String(Math.floor(highScore))
+  );
+
+  localStorage.setItem(
+    'starlightUpgrades',
+    JSON.stringify(upgrades)
+  );
+}
+
+/* =========================
+   업그레이드 수치
+========================= */
+
+function engineLevel(){
+  return upgrades.engine;
+}
+
+function hullLevel(){
+  return upgrades.hull;
+}
+
+function fuelLevel(){
+  return upgrades.fuel;
+}
+
+function cargoLevel(){
+  return upgrades.cargo;
+}
+
+function getMaxHull(){
+  return 100 + hullLevel()*20;
+}
+
+function getMaxFuel(){
+  return 100 + fuelLevel()*25;
+}
+
+function getNormalSpeed(){
+  return 190 + engineLevel()*25;
+}
+
+function getBoostSpeed(){
+  return 310 + engineLevel()*40;
+}
+
+function getNormalAccel(){
+  return 310 + engineLevel()*40;
+}
+
+function getBoostAccel(){
+  return 480 + engineLevel()*55;
+}
+
+function getDeliveryReward(){
+  return 150 + level*50 + cargoLevel()*50;
+}
+
+/* =========================
+   상점 가격
+========================= */
+
+function getCost(type){
+
+  const base={
+    engine:750,
+    hull:700,
+    fuel:600,
+    cargo:900
+  }[type];
+
+  const lv=upgrades[type];
+
+  return Math.round(
+    base*Math.pow(1.55,lv)
+  );
+}
+
+/* =========================
+   상점 표시
+========================= */
+
+function updateShop(){
+
+  document.getElementById('shopMoney').textContent=
+    money.toLocaleString();
+
+  document.getElementById('engineLevel').textContent=
+    engineLevel();
+
+  document.getElementById('hullLevel').textContent=
+    hullLevel();
+
+  document.getElementById('fuelLevel').textContent=
+    fuelLevel();
+
+  document.getElementById('cargoLevel').textContent=
+    cargoLevel();
+
+  document.getElementById('engineCost').textContent=
+    getCost('engine').toLocaleString();
+
+  document.getElementById('hullCost').textContent=
+    getCost('hull').toLocaleString();
+
+  document.getElementById('fuelCost').textContent=
+    getCost('fuel').toLocaleString();
+
+  document.getElementById('cargoCost').textContent=
+    getCost('cargo').toLocaleString();
+
+  document.getElementById('buyEngine').disabled=
+    money<getCost('engine');
+
+  document.getElementById('buyHull').disabled=
+    money<getCost('hull');
+
+  document.getElementById('buyFuel').disabled=
+    money<getCost('fuel');
+
+  document.getElementById('buyCargo').disabled=
+    money<getCost('cargo');
+}
+
+/* =========================
+   업그레이드 구매
+========================= */
+
+function buyUpgrade(type){
+
+  const cost=getCost(type);
+
+  if(money<cost){
+    alert('크레딧이 부족합니다!');
+    return;
+  }
+
+  money-=cost;
+  upgrades[type]++;
+
+  highScore=Math.max(highScore,money);
+
+  saveGameData();
+  updateShop();
+  updateHud();
+}
+
+/* 버튼 연결 */
+
+document.getElementById('buyEngine').onclick=()=>{
+  buyUpgrade('engine');
+};
+
+document.getElementById('buyHull').onclick=()=>{
+  buyUpgrade('hull');
+};
+
+document.getElementById('buyFuel').onclick=()=>{
+  buyUpgrade('fuel');
+};
+
+document.getElementById('buyCargo').onclick=()=>{
+  buyUpgrade('cargo');
+};
+
+/* =========================
+   상점 열기/닫기
+========================= */
+
+function openShop(){
+
+  if(state==='play'||state==='pause'){
+    return;
+  }
+
+  updateShop();
+
+  document.getElementById('overlay').style.display='none';
+  document.getElementById('shopOverlay').style.display='flex';
+}
+
+function closeShop(){
+
+  document.getElementById('shopOverlay').style.display='none';
+  document.getElementById('overlay').style.display='flex';
+
+  updateShop();
+}
+
+document.getElementById('shopBtn').onclick=()=>{
+  openShop();
+};
+
+document.getElementById('closeShop').onclick=()=>{
+  closeShop();
+};
+
+/* =========================
+   게임 초기화
+========================= */
+
+function resetGame(lv=1,keepMoney=true){
+
+  level=lv;
+
+  delivered=0;
+  spawnTimer=0;
+  starTimer=0;
+  camShake=0;
+  worldTime=0;
+
+  packages=[];
+  meteors=[];
+  stars=[];
+  particles=[];
+
+  player={
+    x:600,
+    y:570,
+    r:18,
+    vx:0,
+    vy:0,
+    hp:getMaxHull(),
+    fuel:getMaxFuel(),
+    angle:-Math.PI/2,
+    boost:0
+  };
+
+  station={
+    x:120+Math.random()*960,
+    y:110+Math.random()*330,
+    r:54
+  };
+
+  goal={
+    x:120+Math.random()*960,
+    y:100+Math.random()*300,
+    r:34
+  };
+
+  for(let i=0;i<65;i++){
+
+    stars.push({
+      x:Math.random()*W,
+      y:Math.random()*H,
+      s:.5+Math.random()*2,
+      a:.2+Math.random()*.8
+    });
+
+  }
+
+  for(let i=0;i<5+level*2;i++){
+    spawnMeteor(true);
+  }
+
+  spawnPackage();
+  spawnPackage();
+  spawnPackage();
+
+  updateHud();
+}
+
+/* =========================
+   시작
+========================= */
+
+function startGame(){
+
+  resetGame(1,true);
+
+  state='play';
+
+  document.getElementById('overlay').style.display='none';
+  document.getElementById('shopOverlay').style.display='none';
+  document.getElementById('hud').hidden=false;
+}
+
+/* ★ 처음 버튼 연결 */
+document.getElementById('startBtn').onclick=startGame;
+
+/* =========================
+   레벨 완료
+========================= */
+
+function finishLevel(){
+
+  state='level';
+
+  money+=500+level*250;
+
+  highScore=Math.max(highScore,money);
+
+  saveGameData();
+
+  document.getElementById('overlay').style.display='flex';
+  document.getElementById('hud').hidden=true;
+
+  document.getElementById('title').textContent=
+    '🌟 배송 성공!';
+
+  document.getElementById('subtitle').innerHTML=
+    '화물을 모두 전달했습니다.<br>더 위험하고 더 큰 보상을 노려볼까요?';
+
+  document.getElementById('message').textContent=
+    `레벨 ${level} 완료 · 이번 보너스 +${(500+level*250).toLocaleString()} 크레딧`;
+
+  document.getElementById('startBtn').textContent=
+    '다음 레벨';
+
+  document.getElementById('startBtn').onclick=()=>{
+
+    resetGame(level+1,true);
+
+    state='play';
+
+    document.getElementById('overlay').style.display='none';
+    document.getElementById('hud').hidden=false;
+
+    document.getElementById('startBtn').onclick=startGame;
+  };
+
+  updateShop();
+}
+
+/* =========================
+   게임 오버
+========================= */
+
+function gameOver(){
+
+  state='over';
+
+  document.getElementById('overlay').style.display='flex';
+  document.getElementById('hud').hidden=true;
+
+  document.getElementById('title').textContent=
+    '💥 화물선 파괴';
+
+  document.getElementById('subtitle').innerHTML=
+    '이번 항해는 여기까지입니다.<br>운석은 생각보다 성질이 더럽습니다.';
+
+  document.getElementById('message').textContent=
+    `도달 레벨 ${level} · 보유 크레딧 ${money.toLocaleString()}`;
+
+  document.getElementById('startBtn').textContent=
+    '다시 시작';
+
+  document.getElementById('startBtn').onclick=startGame;
+
+  updateShop();
+}
+
+/* =========================
+   일시정지
+========================= */
+
+function togglePause(){
+
+  if(state==='play'){
+    state='pause';
+  }else if(state==='pause'){
+    state='play';
+  }
+
+  if(state==='pause'){
+
+    document.getElementById('overlay').style.display='flex';
+    document.getElementById('hud').hidden=true;
+
+    document.getElementById('title').textContent=
+      '⏸ 일시정지';
+
+    document.getElementById('subtitle').textContent=
+      '잠깐 쉬어가세요.';
+
+    document.getElementById('message').textContent=
+      'P 키 또는 버튼을 눌러 계속';
+
+    document.getElementById('startBtn').textContent=
+      '계속하기';
+
+    document.getElementById('startBtn').onclick=()=>{
+      togglePause();
+    };
+
+    document.getElementById('shopBtn').style.display='none';
+
+  }else{
+
+    document.getElementById('overlay').style.display='none';
+    document.getElementById('hud').hidden=false;
+
+  }
+}
+
+/* =========================
+   홈
+========================= */
+
+function goHome(){
+  location.href='index.html';
+}
+
+/* =========================
+   운석
+========================= */
+
+function spawnMeteor(random=false){
+
+  const side=Math.floor(Math.random()*4);
+
+  let x,y;
+
+  if(side===0){
+    x=-40;
+    y=Math.random()*H;
+  }else if(side===1){
+    x=W+40;
+    y=Math.random()*H;
+  }else if(side===2){
+    x=Math.random()*W;
+    y=-40;
+  }else{
+    x=Math.random()*W;
+    y=H+40;
+  }
+
+  const speed=
+    70+
+    Math.random()*60+
+    level*7;
+
+  const a=
+    Math.atan2(350-y,600-x)+
+    (Math.random()-.5)*1.0;
+
+  meteors.push({
+    x,
+    y,
+    r:10+Math.random()*22,
+    vx:Math.cos(a)*speed,
+    vy:Math.sin(a)*speed,
+    rot:Math.random()*6.28,
+    spin:(Math.random()-.5)*3,
+    cr:Math.random()*100,
+    random
+  });
+}
+
+function spawnPackage(){
+
+  const x=100+Math.random()*1000;
+  const y=90+Math.random()*470;
+
+  packages.push({
+    x,
+    y,
+    r:13,
+    spin:Math.random()*6.28,
+    carried:false,
+    pulse:Math.random()*10
+  });
+}
+
+/* =========================
+   파티클
+========================= */
+
+function burst(
+  x,
+  y,
+  color='#79efff',
+  n=10
+){
+
+  for(let i=0;i<n;i++){
+
+    const a=Math.random()*Math.PI*2;
+    const s=30+Math.random()*170;
+
+    particles.push({
+      x,
+      y,
+      vx:Math.cos(a)*s,
+      vy:Math.sin(a)*s,
+      life:.35+Math.random()*.65,
+      size:2+Math.random()*4,
+      color
+    });
+
+  }
+}
+
+/* =========================
+   유틸
+========================= */
+
+function clamp(v,a,b){
+  return Math.max(a,Math.min(b,v));
+}
+
+function dist(a,b){
+  return Math.hypot(a.x-b.x,a.y-b.y);
+}
+
+/* =========================
+   게임 업데이트
+========================= */
+
+function update(dt){
+
+  worldTime+=dt;
+
+  camShake*=Math.pow(.001,dt);
+
+  player.fuel-=
+    dt*(1.6+level*.05);
+
+  if(player.fuel<=0){
+
+    player.fuel=0;
+
+    player.hp-=dt*8;
+  }
+
+  let ax=0;
+  let ay=0;
+
+  if(keys.w||keys.arrowup)ay-=1;
+  if(keys.s||keys.arrowdown)ay+=1;
+  if(keys.a||keys.arrowleft)ax-=1;
+  if(keys.d||keys.arrowright)ax+=1;
+
+  const len=Math.hypot(ax,ay)||1;
+
+  ax/=len;
+  ay/=len;
+
+  const isBoost=
+    boost||
+    keys.shift;
+
+  const max=
+    isBoost?
+    getBoostSpeed():
+    getNormalSpeed();
+
+  const accel=
+    isBoost?
+    getBoostAccel():
+    getNormalAccel();
+
+  if(isBoost&&player.fuel>0){
+
+    player.fuel-=dt*7;
+    player.boost=1;
+
+  }else{
+
+    player.boost=
+      Math.max(
+        0,
+        player.boost-dt*3
+      );
+  }
+
+  player.vx+=
+    (ax*accel-player.vx)*
+    Math.min(1,dt*5);
+
+  player.vy+=
+    (ay*accel-player.vy)*
+    Math.min(1,dt*5);
+
+  const sp=
+    Math.hypot(
+      player.vx,
+      player.vy
+    );
+
+  if(sp>max){
+
+    player.vx=
+      player.vx/sp*max;
+
+    player.vy=
+      player.vy/sp*max;
+  }
+
+  player.x+=player.vx*dt;
+  player.y+=player.vy*dt;
+
+  player.x=
+    clamp(
+      player.x,
+      30,
+      W-30
+    );
+
+  player.y=
+    clamp(
+      player.y,
+      30,
+      H-30
+    );
+
+  if(sp>4){
+
+    player.angle=
+      Math.atan2(
+        player.vy,
+        player.vx
+      );
+  }
+
+  /* 운석 생성 */
+
+  spawnTimer-=dt;
+
+  if(spawnTimer<=0){
+
+    spawnTimer=
+      Math.max(
+        .45,
+        1.4-level*.05
+      );
+
+    spawnMeteor();
+  }
+
+  /* 우주 먼지 */
+
+  starTimer-=dt;
+
+  if(starTimer<=0){
+
+    starTimer=.12;
+
+    for(let i=0;i<3;i++){
+
+      particles.push({
+        x:
+          player.x-
+          Math.cos(player.angle)*18+
+          (Math.random()-.5)*8,
+
+        y:
+          player.y-
+          Math.sin(player.angle)*18+
+          (Math.random()-.5)*8,
+
+        vx:-player.vx*.15,
+        vy:-player.vy*.15,
+
+        life:.25+Math.random()*.25,
+        size:1+Math.random()*2,
+        color:'#7ff5ff'
+      });
+
+    }
+  }
+
+  /* 별 */
+
+  for(const s of stars){
+
+    s.y+=6*dt;
+
+    if(s.y>H+4){
+
+      s.y=-4;
+      s.x=Math.random()*W;
+    }
+  }
+
+  /* 화물 */
+
+  for(const p of packages){
+
+    p.spin+=dt*2;
+    p.pulse+=dt*2;
+
+    if(
+      !p.carried&&
+      dist(player,p)<34
+    ){
+
+      p.carried=true;
+
+      burst(
+        p.x,
+        p.y,
+        '#78d9ff',
+        16
+      );
+    }
+  }
+
+  const carrying=
+    packages.some(
+      p=>p.carried
+    );
+
+  /* 배송 */
+
+  if(
+    carrying&&
+    dist(player,goal)<48
+  ){
+
+    for(const p of packages){
+      p.carried=false;
+    }
+
+    packages=
+      packages.filter(
+        p=>!p.carried
+      );
+
+    delivered++;
+
+    money+=getDeliveryReward();
+
+    highScore=
+      Math.max(
+        highScore,
+        money
+      );
+
+    saveGameData();
+
+    burst(
+      goal.x,
+      goal.y,
+      '#fff07d',
+      30
+    );
+
+    goal.x=
+      100+Math.random()*1000;
+
+    goal.y=
+      90+Math.random()*320;
+
+    if(delivered>=3){
+
+      finishLevel();
+
+      return;
+    }
+  }
+
+  /* 화물 따라가기 */
+
+  for(const p of packages){
+
+    if(p.carried){
+
+      p.x=
+        player.x+
+        Math.cos(
+          player.angle+Math.PI
+        )*24;
+
+      p.y=
+        player.y+
+        Math.sin(
+          player.angle+Math.PI
+        )*24;
+    }
+  }
+
+  /* 운석 */
+
+  for(const m of meteors){
+
+    m.x+=m.vx*dt;
+    m.y+=m.vy*dt;
+    m.rot+=m.spin*dt;
+
+    if(
+      m.x<-90||
+      m.x>W+90||
+      m.y<-90||
+      m.y>H+90
+    ){
+
+      m.dead=true;
+    }
+
+    if(
+      dist(player,m)<
+      player.r+m.r
+    ){
+
+      m.dead=true;
+
+      player.hp-=
+        12+
+        level*1.5;
+
+      camShake=1;
+
+      burst(
+        player.x,
+        player.y,
+        '#ff6e88',
+        20
+      );
+    }
+  }
+
+  meteors=
+    meteors.filter(
+      m=>!m.dead
+    );
+
+  /* 파티클 */
+
+  for(const q of particles){
+
+    q.x+=q.vx*dt;
+    q.y+=q.vy*dt;
+
+    q.vx*=Math.pow(.05,dt);
+    q.vy*=Math.pow(.05,dt);
+
+    q.life-=dt;
+  }
+
+  particles=
+    particles.filter(
+      q=>q.life>0
+    );
+
+  if(player.hp<=0){
+
+    player.hp=0;
+
+    gameOver();
+
+    return;
+  }
+
+  updateHud();
+}
+
+/* =========================
+   HUD
+========================= */
+
+function updateHud(){
+
+  document.getElementById('level').textContent=
+    level;
+
+  document.getElementById('money').textContent=
+    money.toLocaleString();
+
+  document.getElementById('delivered').textContent=
+    `${delivered} / 3`;
+
+  const maxHull=getMaxHull();
+  const maxFuel=getMaxFuel();
+
+  const hpPercent=
+    player?
+    (player.hp/maxHull)*100:
+    0;
+
+  const fuelPercent=
+    player?
+    (player.fuel/maxFuel)*100:
+    0;
+
+  document.getElementById('hpText').textContent=
+    Math.round(
+      clamp(hpPercent,0,100)
+    )+'%';
+
+  document.getElementById('fuelText').textContent=
+    Math.round(
+      clamp(fuelPercent,0,100)
+    )+'%';
+
+  document.getElementById('hpBar').style.width=
+    clamp(
+      hpPercent,
+      0,
+      100
+    )+'%';
+
+  document.getElementById('fuelBar').style.width=
+    clamp(
+      fuelPercent,
+      0,
+      100
+    )+'%';
+}
+
+/* =========================
+   그리기
+========================= */
+
+function draw(){
+
+  ctx.save();
+
+  if(camShake>0){
+
+    ctx.translate(
+      (Math.random()-.5)*
+      camShake*18,
+
+      (Math.random()-.5)*
+      camShake*18
+    );
+  }
+
+  drawSpace();
+  drawGoal();
+  drawPackages();
+  drawMeteors();
+  drawPlayer();
+  drawParticles();
+
+  ctx.restore();
+}
+
+/* =========================
+   우주
+========================= */
+
+function drawSpace(){
+
+  const g=
+    ctx.createLinearGradient(
+      0,0,0,H
+    );
+
+  g.addColorStop(
+    0,
+    '#101a42'
+  );
+
+  g.addColorStop(
+    .5,
+    '#08122d'
+  );
+
+  g.addColorStop(
+    1,
+    '#040710'
+  );
+
+  ctx.fillStyle=g;
+
+  ctx.fillRect(
+    0,0,W,H
+  );
+
+  ctx.globalAlpha=.18;
+
+  for(let i=0;i<7;i++){
+
+    const x=
+      80+
+      i*180+
+      Math.sin(
+        worldTime*.2+i
+      )*35;
+
+    const y=
+      120+
+      i%3*170;
+
+    const rg=
+      ctx.createRadialGradient(
+        x,y,0,
+        x,y,140
+      );
+
+    rg.addColorStop(
+      0,
+      'rgba(98,110,255,.55)'
+    );
+
+    rg.addColorStop(
+      1,
+      'rgba(98,110,255,0)'
+    );
+
+    ctx.fillStyle=rg;
+
+    ctx.beginPath();
+
+    ctx.arc(
+      x,
+      y,
+      140,
+      0,
+      Math.PI*2
+    );
+
+    ctx.fill();
+  }
+
+  ctx.globalAlpha=1;
+
+  for(const s of stars){
+
+    ctx.globalAlpha=s.a;
+
+    ctx.fillStyle='#fff';
+
+    ctx.beginPath();
+
+    ctx.arc(
+      s.x,
+      s.y,
+      s.s,
+      0,
+      Math.PI*2
+    );
+
+    ctx.fill();
+  }
+
+  ctx.globalAlpha=1;
+
+  ctx.strokeStyle=
+    'rgba(120,170,255,.07)';
+
+  ctx.lineWidth=1;
+
+  for(let x=0;x<=W;x+=60){
+
+    ctx.beginPath();
+
+    ctx.moveTo(x,0);
+    ctx.lineTo(x,H);
+
+    ctx.stroke();
+  }
+
+  for(let y=0;y<=H;y+=60){
+
+    ctx.beginPath();
+
+    ctx.moveTo(0,y);
+    ctx.lineTo(W,y);
+
+    ctx.stroke();
+  }
+}
+
+/* =========================
+   목적지
+========================= */
+
+function drawGoal(){
+
+  const p=goal;
+
+  ctx.save();
+
+  ctx.translate(
+    p.x,
+    p.y
+  );
+
+  const pulse=
+    4+
+    Math.sin(
+      worldTime*3
+    )*3;
+
+  ctx.strokeStyle=
+    'rgba(255,238,110,.65)';
+
+  ctx.lineWidth=3;
+
+  ctx.beginPath();
+
+  ctx.arc(
+    0,
+    0,
+    p.r+pulse,
+    0,
+    Math.PI*2
+  );
+
+  ctx.stroke();
+
+  ctx.fillStyle=
+    '#ffe86a';
+
+  ctx.beginPath();
+
+  ctx.arc(
+    0,
+    0,
+    12,
+    0,
+    Math.PI*2
+  );
+
+  ctx.fill();
+
+  ctx.fillStyle=
+    'rgba(255,255,255,.8)';
+
+  ctx.font=
+    'bold 14px Arial';
+
+  ctx.textAlign='center';
+
+  ctx.fillText(
+    'DELIVER',
+    0,
+    72
+  );
+
+  ctx.restore();
+}
+
+/* =========================
+   화물
+========================= */
+
+function drawPackages(){
+
+  for(const p of packages){
+
+    ctx.save();
+
+    ctx.translate(
+      p.x,
+      p.y
+    );
+
+    ctx.rotate(
+      p.spin
+    );
+
+    const glow=
+      16+
+      Math.sin(
+        p.pulse
+      )*4;
+
+    ctx.fillStyle=
+      'rgba(84,214,255,.18)';
+
+    ctx.beginPath();
+
+    ctx.arc(
+      0,
+      0,
+      glow,
+      0,
+      Math.PI*2
+    );
+
+    ctx.fill();
+
+    ctx.fillStyle=
+      '#62ddff';
+
+    ctx.fillRect(
+      -11,
+      -11,
+      22,
+      22
+    );
+
+    ctx.strokeStyle=
+      '#d5f8ff';
+
+    ctx.lineWidth=2;
+
+    ctx.strokeRect(
+      -11,
+      -11,
+      22,
+      22
+    );
+
+    ctx.strokeStyle=
+      'rgba(0,34,68,.8)';
+
+    ctx.beginPath();
+
+    ctx.moveTo(
+      -9,
+      -9
+    );
+
+    ctx.lineTo(
+      9,
+      9
+    );
+
+    ctx.moveTo(
+      9,
+      -9
+    );
+
+    ctx.lineTo(
+      -9,
+      9
+    );
+
+    ctx.stroke();
+
+    ctx.restore();
+  }
+}
+
+/* =========================
+   운석
+========================= */
+
+function drawMeteors(){
+
+  for(const m of meteors){
+
+    ctx.save();
+
+    ctx.translate(
+      m.x,
+      m.y
+    );
+
+    ctx.rotate(
+      m.rot
+    );
+
+    const g=
+      ctx.createRadialGradient(
+        -m.r*.3,
+        -m.r*.35,
+        2,
+        0,
+        0,
+        m.r*1.2
+      );
+
+    g.addColorStop(
+      0,
+      '#a2adb9'
+    );
+
+    g.addColorStop(
+      .5,
+      '#5e6672'
+    );
+
+    g.addColorStop(
+      1,
+      '#202633'
+    );
+
+    ctx.fillStyle=g;
+
+    ctx.beginPath();
+
+    for(let i=0;i<8;i++){
+
+      const a=
+        i*Math.PI/4;
+
+      const rr=
+        m.r*
+        (
+          .76+
+          ((i*17)%5)/10
+        );
+
+      const x=
+        Math.cos(a)*rr;
+
+      const y=
+        Math.sin(a)*rr;
+
+      if(i===0){
+        ctx.moveTo(x,y);
+      }else{
+        ctx.lineTo(x,y);
+      }
+    }
+
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle=
+      'rgba(20,24,32,.6)';
+
+    for(let i=0;i<3;i++){
+
+      ctx.beginPath();
+
+      ctx.arc(
+        (Math.random()-.5)*m.r*.8,
+        (Math.random()-.5)*m.r*.8,
+        2+Math.random()*3,
+        0,
+        Math.PI*2
+      );
+
+      ctx.fill();
+    }
+
+    ctx.restore();
+  }
+}
+
+/* =========================
+   플레이어
+========================= */
+
+function drawPlayer(){
+
+  const p=player;
+
+  ctx.save();
+
+  ctx.translate(
+    p.x,
+    p.y
+  );
+
+  ctx.rotate(
+    p.angle
+  );
+
+  if(p.boost>0){
+
+    ctx.fillStyle=
+      'rgba(88,242,255,.8)';
+
+    ctx.beginPath();
+
+    ctx.moveTo(
+      -19,
+      -7
+    );
+
+    ctx.lineTo(
+      -46,
+      0
+    );
+
+    ctx.lineTo(
+      -19,
+      7
+    );
+
+    ctx.closePath();
+
+    ctx.fill();
+  }
+
+  const glow=
+    ctx.createRadialGradient(
+      0,
+      0,
+      5,
+      0,
+      0,
+      35
+    );
+
+  glow.addColorStop(
+    0,
+    'rgba(110,236,255,.24)'
+  );
+
+  glow.addColorStop(
+    1,
+    'rgba(110,236,255,0)'
+  );
+
+  ctx.fillStyle=glow;
+
+  ctx.beginPath();
+
+  ctx.arc(
+    0,
+    0,
+    36,
+    0,
+    Math.PI*2
+  );
+
+  ctx.fill();
+
+  ctx.fillStyle=
+    '#d8e6ff';
+
+  ctx.beginPath();
+
+  ctx.moveTo(
+    26,
+    0
+  );
+
+  ctx.lineTo(
+    -12,
+    -15
+  );
+
+  ctx.lineTo(
+    -19,
+    0
+  );
+
+  ctx.lineTo(
+    -12,
+    15
+  );
+
+  ctx.closePath();
+
+  ctx.fill();
+
+  ctx.fillStyle=
+    '#6adcfb';
+
+  ctx.beginPath();
+
+  ctx.moveTo(
+    12,
+    0
+  );
+
+  ctx.lineTo(
+    -7,
+    -8
+  );
+
+  ctx.lineTo(
+    -7,
+    8
+  );
+
+  ctx.closePath();
+
+  ctx.fill();
+
+  ctx.fillStyle=
+    '#18263c';
+
+  ctx.beginPath();
+
+  ctx.arc(
+    2,
+    0,
+    6,
+    0,
+    Math.PI*2
+  );
+
+  ctx.fill();
+
+  ctx.restore();
+}
+
+/* =========================
+   파티클
+========================= */
+
+function drawParticles(){
+
+  for(const q of particles){
+
+    ctx.globalAlpha=
+      Math.max(
+        0,
+        q.life
+      );
+
+    ctx.fillStyle=
+      q.color;
+
+    ctx.beginPath();
+
+    ctx.arc(
+      q.x,
+      q.y,
+      q.size,
+      0,
+      Math.PI*2
+    );
+
+    ctx.fill();
+  }
+
+  ctx.globalAlpha=1;
+}
+
+/* =========================
+   게임 루프
+========================= */
+
+function loop(t){
+
+  const dt=
+    Math.min(
+      .033,
+      (t-last)/1000||0
+    );
+
+  last=t;
+
+  if(state==='play'){
+    update(dt);
+  }
+
+  draw();
+
+  requestAnimationFrame(loop);
+}
+
+/* =========================
+   시작
+========================= */
+
+resetGame(1,true);
+updateShop();
+
+requestAnimationFrame(loop);
+</script>
+
+</body>
+</html>
