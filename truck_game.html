@@ -1,0 +1,2635 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>트럭 게임 V10</title>
+
+<style>
+    html, body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: #000;
+        font-family: Arial, sans-serif;
+    }
+
+    canvas {
+        display: block;
+        width: 100vw;
+        height: 100vh;
+        outline: none;
+    }
+</style>
+</head>
+
+<body>
+
+<canvas id="game" tabindex="0"></canvas>
+
+<script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+let W = window.innerWidth;
+let H = window.innerHeight;
+
+canvas.width = W;
+canvas.height = H;
+
+window.addEventListener("resize", () => {
+    W = window.innerWidth;
+    H = window.innerHeight;
+
+    canvas.width = W;
+    canvas.height = H;
+});
+
+
+// =========================================================
+// 키 입력
+// =========================================================
+
+const keys = {
+    w: false,
+    a: false,
+    s: false,
+    d: false
+};
+
+function clearKeys() {
+    keys.w = false;
+    keys.a = false;
+    keys.s = false;
+    keys.d = false;
+}
+
+document.addEventListener("keydown", (e) => {
+
+    const key = e.key.toLowerCase();
+
+    if (key === "w") keys.w = true;
+    if (key === "a") keys.a = true;
+    if (key === "s") keys.s = true;
+    if (key === "d") keys.d = true;
+
+    // T = 상점
+    if (key === "t" && !e.repeat) {
+        shopOpen = !shopOpen;
+        clearKeys();
+    }
+
+    // 스페이스 = 팝업 버튼
+    if (e.code === "Space" && modal.visible) {
+        e.preventDefault();
+    }
+});
+
+document.addEventListener("keyup", (e) => {
+
+    const key = e.key.toLowerCase();
+
+    if (key === "w") keys.w = false;
+    if (key === "a") keys.a = false;
+    if (key === "s") keys.s = false;
+    if (key === "d") keys.d = false;
+});
+
+window.addEventListener("blur", () => {
+    clearKeys();
+});
+
+document.addEventListener("visibilitychange", () => {
+    if (document.hidden) {
+        clearKeys();
+    }
+});
+
+canvas.addEventListener("pointerdown", () => {
+    canvas.focus();
+});
+
+
+// =========================================================
+// 게임 상태
+// =========================================================
+
+let level = 1;
+let money = 5000;
+
+
+// =========================================================
+// 차량 시스템
+// =========================================================
+
+let vehicleLevel = 1;
+let maxOwnedVehicleLevel = 1;
+
+const vehicleNames = {
+    1: "기본 트럭",
+    2: "스피드 트럭",
+    3: "터보 트럭",
+    4: "슈퍼 트럭",
+    5: "울트라 트럭"
+};
+
+function getVehicleName() {
+    return vehicleNames[vehicleLevel] ||
+        "초고속 트럭 Lv." + vehicleLevel;
+}
+
+function getVehicleBaseSpeed() {
+    return 120 + (vehicleLevel - 1) * 10;
+}
+
+function getVehicleBaseAcceleration() {
+    return 0.012 + (vehicleLevel - 1) * 0.0015;
+}
+
+function getVehiclePrice(nextLevel) {
+
+    if (nextLevel <= 1) {
+        return 0;
+    }
+
+    return Math.floor(
+        2500 * Math.pow(1.35, nextLevel - 2)
+    );
+}
+
+function getTruckColor() {
+
+    const colors = [
+        "#2d8cff",
+        "#ff4949",
+        "#39d353",
+        "#ffb000",
+        "#b15cff",
+        "#00c8ff",
+        "#ff6f00"
+    ];
+
+    return colors[(vehicleLevel - 1) % colors.length];
+}
+
+
+// =========================================================
+// 엔진 시스템
+// =========================================================
+
+let engineLevel = 1;
+let maxOwnedEngineLevel = 1;
+
+const engineNames = {
+    1: "기본 엔진",
+    2: "스포츠 엔진",
+    3: "터보 엔진",
+    4: "레이싱 엔진",
+    5: "슈퍼 엔진"
+};
+
+function getEngineName() {
+    return engineNames[engineLevel] ||
+        "하이퍼 엔진 Lv." + engineLevel;
+}
+
+function getEngineMultiplier() {
+    return 1 + (engineLevel - 1) * 0.20;
+}
+
+function getEnginePrice(nextLevel) {
+
+    if (nextLevel <= 1) {
+        return 0;
+    }
+
+    return Math.floor(
+        1500 * Math.pow(1.30, nextLevel - 2)
+    );
+}
+
+
+// =========================================================
+// 실제 차량 성능
+// =========================================================
+
+function getRealMaxSpeed() {
+    return getVehicleBaseSpeed() * getEngineMultiplier();
+}
+
+function getRealAcceleration() {
+    return getVehicleBaseAcceleration() * getEngineMultiplier();
+}
+
+
+// =========================================================
+// 연료 시스템
+// =========================================================
+
+let fuel = 100;
+
+const MAX_FUEL = 100;
+
+
+// ---------------------------------------------------------
+// 연비 계산
+// ---------------------------------------------------------
+//
+// 1. 엔진 레벨이 높을수록 기본 연비 향상
+// 2. 차량과 엔진 레벨이 같으면 가장 큰 매칭 보너스
+// 3. 1레벨 차이는 작은 보너스
+// 4. 2레벨 차이부터는 매칭 보너스 없음
+// ---------------------------------------------------------
+
+function getFuelEfficiency() {
+
+    const levelDifference =
+        Math.abs(vehicleLevel - engineLevel);
+
+    // 엔진 레벨이 높을수록 연비 향상
+    const engineBonus =
+        1 + (engineLevel - 1) * 0.08;
+
+    let matchBonus = 1;
+
+    // 차량과 엔진 레벨이 같음
+    if (levelDifference === 0) {
+        matchBonus = 1.25;
+    }
+
+    // 한 단계 차이
+    else if (levelDifference === 1) {
+        matchBonus = 1.10;
+    }
+
+    // 두 단계 차이
+    else if (levelDifference === 2) {
+        matchBonus = 1.05;
+    }
+
+    return engineBonus * matchBonus;
+}
+
+
+
+
+// =========================================================
+// 화면 좌표 / 차선 좌표
+// =========================================================
+
+function getRoadHalfWidthAtY(y) {
+
+    const horizon = H * 0.38;
+    const topRoadWidth = W * 0.10;
+    const bottomRoadWidth = W * 0.86;
+
+    const t = Math.max(
+        0,
+        Math.min(
+            1,
+            (y - horizon) /
+            (H - horizon)
+        )
+    );
+
+    return topRoadWidth +
+        (bottomRoadWidth - topRoadWidth) * t;
+}
+
+function getTruckScreenX() {
+
+    const y = H - 180;
+    const roadHalf = getRoadHalfWidthAtY(y);
+
+    return W / 2 +
+        truck.x * roadHalf * (2 / 3);
+}
+
+function getLaneX(lane, y) {
+
+    const roadHalf =
+        getRoadHalfWidthAtY(y);
+
+    return W / 2 +
+        lane * roadHalf * (2 / 3);
+}
+
+// =========================================================
+// 장애물
+// =========================================================
+
+let obstacles = [];
+let nextObstacleDistance = 220;
+
+function resetObstacles() {
+
+    obstacles = [];
+
+    obstacles.push({
+        distance: 70,
+        lane:
+            Math.floor(Math.random() * 3) - 1
+    });
+
+    obstacles.push({
+        distance: 120,
+        lane:
+            Math.floor(Math.random() * 3) - 1
+    });
+
+    obstacles.push({
+        distance: 175,
+        lane:
+            Math.floor(Math.random() * 3) - 1
+    });
+
+    nextObstacleDistance = 220;
+}
+
+function updateObstacleSpawning() {
+
+    while (
+        truck.distance + 180 >=
+        nextObstacleDistance
+    ) {
+
+        obstacles.push({
+            distance: nextObstacleDistance,
+            lane:
+                Math.floor(Math.random() * 3) - 1
+        });
+
+        nextObstacleDistance +=
+            45 + Math.random() * 55;
+    }
+}
+
+function getObstacleScreenRect(obstacle) {
+
+    const remaining =
+        obstacle.distance - truck.distance;
+
+    const visibleDistance = 180;
+
+    if (remaining > visibleDistance) {
+        return null;
+    }
+
+    const progress =
+        Math.max(
+            0,
+            Math.min(
+                1,
+                1 - remaining / visibleDistance
+            )
+        );
+
+    const horizon = H * 0.38;
+    const truckY = H - 180;
+
+    const y =
+        horizon +
+        20 +
+        progress *
+        (truckY - horizon - 20);
+
+    // ★ 상자를 조금 더 크게
+    const size =
+        18 + progress * 70;
+
+    const x =
+        getLaneX(obstacle.lane, y);
+
+    return {
+        x: x - size / 2,
+        y: y - size,
+        w: size,
+        h: size
+    };
+}
+
+function drawObstacles() {
+
+    for (const obstacle of obstacles) {
+
+        const r =
+            getObstacleScreenRect(obstacle);
+
+        if (!r) continue;
+
+        ctx.fillStyle = "#8b5a2b";
+        ctx.strokeStyle = "#3f2612";
+        ctx.lineWidth = 4;
+
+        ctx.fillRect(
+            r.x,
+            r.y,
+            r.w,
+            r.h
+        );
+
+        ctx.strokeRect(
+            r.x,
+            r.y,
+            r.w,
+            r.h
+        );
+
+        ctx.beginPath();
+
+        ctx.moveTo(r.x, r.y);
+        ctx.lineTo(
+            r.x + r.w,
+            r.y + r.h
+        );
+
+        ctx.moveTo(
+            r.x + r.w,
+            r.y
+        );
+
+        ctx.lineTo(
+            r.x,
+            r.y + r.h
+        );
+
+        ctx.stroke();
+    }
+}
+
+function checkObstacleCollision() {
+
+    const centerX =
+        getTruckScreenX();
+
+    const truckY =
+        H - 180;
+
+    const truckRect = {
+        left: centerX - 60,
+        right: centerX + 60,
+        top: truckY + 43,
+        bottom: truckY + 118
+    };
+
+    for (
+        let i = obstacles.length - 1;
+        i >= 0;
+        i--
+    ) {
+
+        const obstacle =
+            getObstacleScreenRect(
+                obstacles[i]
+            );
+
+        if (!obstacle) continue;
+
+        const hit =
+            truckRect.right >= obstacle.x &&
+            truckRect.left <=
+                obstacle.x + obstacle.w &&
+            truckRect.bottom >= obstacle.y &&
+            truckRect.top <=
+                obstacle.y + obstacle.h;
+
+        if (hit) {
+
+            obstacles.splice(i, 1);
+
+            truck.speed *= 0.25;
+            fuel -= 10;
+
+            if (fuel < 0) fuel = 0;
+
+            clearKeys();
+
+            showModal(
+                "📦 장애물 충돌!",
+                "장애물과 충돌했습니다.\n\n" +
+                "속도가 크게 줄고 연료 10%가 감소했습니다."
+            );
+
+            return;
+        }
+    }
+
+    obstacles =
+        obstacles.filter(
+            obstacle =>
+                obstacle.distance >
+                truck.distance - 20
+        );
+}
+
+resetObstacles();
+
+
+// =========================================================
+// 트럭
+// =========================================================
+
+const truck = {
+    x: 0,
+    speed: 0,
+    distance: 0
+};
+
+
+// =========================================================
+// 목적지
+// =========================================================
+
+let destination = {
+    distance: level * 100,
+    completed: false
+};
+
+function getLevelDistance() {
+    return level * 100;
+}
+
+function getLevelReward() {
+    return level * 1000;
+}
+
+function createDestination() {
+
+    destination = {
+        distance: getLevelDistance(),
+        completed: false
+    };
+}
+
+
+// =========================================================
+// 팝업
+// =========================================================
+
+const modal = {
+    visible: false,
+    title: "",
+    message: "",
+    button: "확인",
+    action: null
+};
+
+function showModal(
+    title,
+    message,
+    action = null,
+    button = "확인"
+) {
+    modal.visible = true;
+    modal.title = title;
+    modal.message = message;
+    modal.button = button;
+    modal.action = action;
+
+    clearKeys();
+}
+
+function closeModal() {
+
+    const action = modal.action;
+
+    modal.visible = false;
+    modal.title = "";
+    modal.message = "";
+    modal.button = "확인";
+    modal.action = null;
+
+    clearKeys();
+
+    if (action) {
+        action();
+    }
+
+    canvas.focus();
+}
+
+
+// =========================================================
+// 레벨 완료
+// =========================================================
+
+function finishLevel() {
+
+    destination.completed = true;
+    truck.speed = 0;
+    clearKeys();
+
+    const reward = getLevelReward();
+
+    money += reward;
+
+    showModal(
+        "🚚 배송 완료!",
+        "레벨 " + level +
+        " 배송 완료!\n\n" +
+        "$" + reward.toLocaleString() +
+        " 획득했습니다.",
+        () => {
+
+            level++;
+
+            truck.distance = 0;
+            truck.speed = 0;
+            truck.x = 0;
+
+            createDestination();
+        },
+        "다음 레벨"
+    );
+}
+
+
+// =========================================================
+// 게임 오버
+// =========================================================
+
+function showGameOver() {
+
+    if (modal.visible) {
+        return;
+    }
+
+    truck.speed = 0;
+    clearKeys();
+
+    showModal(
+        "⛽ 연료 부족!",
+        "연료가 모두 떨어졌습니다.\n\n" +
+        "연료 25%를 충전하고 다시 시작합니다.",
+        () => {
+
+            fuel += 25;
+            truck.speed = 0;
+            clearKeys();
+
+        },
+        "25% 충전"
+    );
+}
+
+
+// =========================================================
+// 차량 업데이트
+// =========================================================
+
+function updateTruck() {
+
+    if (modal.visible || shopOpen) {
+        clearKeys();
+        return;
+    }
+
+    const realMaxSpeed = getRealMaxSpeed();
+
+    // 실제 km/h를 내부 이동값으로 변환
+    const internalMaxSpeed =
+        realMaxSpeed / 120 * 0.75;
+
+    // ★ 주행 중 속도를 일정하게 유지할 목표 속도
+    const cruiseSpeed =
+        internalMaxSpeed;
+
+    // -----------------------------------------------------
+    // W = 전진
+    // -----------------------------------------------------
+    if (keys.w) {
+        truck.speed +=
+            (cruiseSpeed - truck.speed) * 0.035;
+    }
+
+    // -----------------------------------------------------
+    // S = 후진
+    // -----------------------------------------------------
+    else if (keys.s) {
+        const reverseSpeed =
+            -internalMaxSpeed * 0.42;
+
+        truck.speed +=
+            (reverseSpeed - truck.speed) * 0.045;
+    }
+
+    // -----------------------------------------------------
+    // 키를 놓으면 부드럽게 감속
+    // -----------------------------------------------------
+    else {
+        truck.speed *= 0.96;
+
+        if (Math.abs(truck.speed) < 0.002) {
+            truck.speed = 0;
+        }
+    }
+
+    // -----------------------------------------------------
+    // 최고속도 제한
+    // -----------------------------------------------------
+    truck.speed = Math.max(
+        -internalMaxSpeed * 0.42,
+        Math.min(cruiseSpeed, truck.speed)
+    );
+
+    // -----------------------------------------------------
+    // 좌우
+    // -----------------------------------------------------
+    if (keys.a) {
+        truck.x -= 0.012;
+    }
+
+    if (keys.d) {
+        truck.x += 0.012;
+    }
+
+    truck.x = Math.max(-1.15, truck.x);
+    truck.x = Math.min(1.15, truck.x);
+
+    // -----------------------------------------------------
+    // 거리
+    // -----------------------------------------------------
+    truck.distance += truck.speed;
+
+    if (truck.distance < 0) {
+        truck.distance = 0;
+    }
+
+    // -----------------------------------------------------
+    // 연료 소비
+    // -----------------------------------------------------
+    if (Math.abs(truck.speed) > 0) {
+
+        const speedRatio =
+            Math.min(
+                Math.abs(truck.speed) /
+                internalMaxSpeed,
+                1
+            );
+
+        const baseFuelUse =
+            Math.abs(truck.speed) *
+            (0.008 + speedRatio * 0.004);
+
+        fuel -=
+            baseFuelUse /
+            getFuelEfficiency();
+
+        if (fuel <= 0) {
+            fuel = 0;
+            truck.speed = 0;
+            clearKeys();
+            showGameOver();
+            return;
+        }
+    }
+
+    // -----------------------------------------------------
+    // 장애물
+    // -----------------------------------------------------
+    updateObstacleSpawning();
+    checkObstacleCollision();
+
+    // -----------------------------------------------------
+    // 목적지 도착
+    // -----------------------------------------------------
+    // 깃발은 코스 전체에서 부드럽게 이동하고,
+    // 마지막에는 트럭 앞까지 자연스럽게 내려온다.
+    const remaining =
+        destination.distance - truck.distance;
+
+    if (
+        !destination.completed &&
+        remaining <= 3.5 &&
+        remaining >= -8 &&
+        isTruckTouchingDestination()
+    ) {
+        finishLevel();
+    }
+}
+
+
+// =========================================================
+// 현재 속도 표시
+// =========================================================
+
+function getCurrentKmh() {
+
+    return (
+        Math.abs(truck.speed) / 0.75
+    ) * 120;
+}
+
+
+// =========================================================
+// 배경
+// =========================================================
+
+function drawSky() {
+
+    const horizon = H * 0.38;
+
+    const gradient =
+        ctx.createLinearGradient(
+            0,
+            0,
+            0,
+            horizon
+        );
+
+    gradient.addColorStop(0, "#72c9ff");
+    gradient.addColorStop(1, "#dff5ff");
+
+    ctx.fillStyle = gradient;
+
+    ctx.fillRect(
+        0,
+        0,
+        W,
+        horizon
+    );
+}
+
+
+// =========================================================
+// 땅
+// =========================================================
+
+function drawGround() {
+
+    const horizon = H * 0.38;
+
+    ctx.fillStyle = "#4f9d3a";
+
+    ctx.fillRect(
+        0,
+        horizon,
+        W,
+        H - horizon
+    );
+}
+
+
+// =========================================================
+// 나무
+// =========================================================
+
+const trees = [];
+
+for (let i = 0; i < 32; i++) {
+
+    trees.push({
+        side: i % 2 === 0 ? -1 : 1,
+        y: 0.42 + (i % 16) * 0.032,
+        size: 18 + (i % 5) * 4,
+        offset: (i % 4) * 0.05
+    });
+}
+
+function drawTree(x, y, size) {
+
+    ctx.fillStyle = "#71452a";
+
+    ctx.fillRect(
+        x - size * 0.12,
+        y,
+        size * 0.24,
+        size * 0.9
+    );
+
+    ctx.fillStyle = "#26752e";
+
+    ctx.beginPath();
+
+    ctx.arc(
+        x,
+        y - size * 0.05,
+        size * 0.42,
+        0,
+        Math.PI * 2
+    );
+
+    ctx.fill();
+
+    ctx.beginPath();
+
+    ctx.arc(
+        x - size * 0.25,
+        y + size * 0.12,
+        size * 0.32,
+        0,
+        Math.PI * 2
+    );
+
+    ctx.fill();
+
+    ctx.beginPath();
+
+    ctx.arc(
+        x + size * 0.25,
+        y + size * 0.12,
+        size * 0.32,
+        0,
+        Math.PI * 2
+    );
+
+    ctx.fill();
+}
+
+function drawScenery() {
+
+    const horizon = H * 0.38;
+
+    for (const tree of trees) {
+
+        const roadWidth =
+            W * 0.12 +
+            (tree.y - 0.38) * W * 2.8;
+
+        const center = W / 2;
+
+        let x;
+
+        if (tree.side < 0) {
+
+            x =
+                center -
+                roadWidth -
+                55 -
+                tree.offset * 100;
+
+        } else {
+
+            x =
+                center +
+                roadWidth +
+                55 +
+                tree.offset * 100;
+        }
+
+        const y = H * tree.y;
+
+        const size =
+            tree.size *
+            (0.8 + (tree.y - 0.42) * 2.2);
+
+        if (
+            x > -100 &&
+            x < W + 100 &&
+            y > horizon
+        ) {
+            drawTree(x, y, size);
+        }
+    }
+}
+
+
+// =========================================================
+// 도로
+// =========================================================
+
+function drawRoad() {
+
+    const horizon = H * 0.38;
+
+    const topRoadWidth = W * 0.10;
+    const bottomRoadWidth = W * 0.86;
+    const center = W / 2;
+
+    // 도로 본체
+    ctx.fillStyle = "#444";
+
+    ctx.beginPath();
+
+    ctx.moveTo(
+        center - topRoadWidth,
+        horizon
+    );
+
+    ctx.lineTo(
+        center + topRoadWidth,
+        horizon
+    );
+
+    ctx.lineTo(
+        center + bottomRoadWidth,
+        H
+    );
+
+    ctx.lineTo(
+        center - bottomRoadWidth,
+        H
+    );
+
+    ctx.closePath();
+    ctx.fill();
+
+    // 도로 가장자리
+    ctx.strokeStyle = "#eeeeee";
+    ctx.lineWidth = 5;
+    ctx.setLineDash([]);
+
+    ctx.beginPath();
+    ctx.moveTo(
+        center - topRoadWidth,
+        horizon
+    );
+    ctx.lineTo(
+        center - bottomRoadWidth,
+        H
+    );
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(
+        center + topRoadWidth,
+        horizon
+    );
+    ctx.lineTo(
+        center + bottomRoadWidth,
+        H
+    );
+    ctx.stroke();
+
+    // ★ 3차선 구분선
+    ctx.strokeStyle = "#ffffff";
+    ctx.lineWidth = 4;
+    ctx.setLineDash([28, 24]);
+
+    // 왼쪽 차선 구분선
+    ctx.beginPath();
+    ctx.moveTo(
+        center - topRoadWidth / 3,
+        horizon
+    );
+    ctx.lineTo(
+        center - bottomRoadWidth / 3,
+        H
+    );
+    ctx.stroke();
+
+    // 오른쪽 차선 구분선
+    ctx.beginPath();
+    ctx.moveTo(
+        center + topRoadWidth / 3,
+        horizon
+    );
+    ctx.lineTo(
+        center + bottomRoadWidth / 3,
+        H
+    );
+    ctx.stroke();
+
+    ctx.setLineDash([]);
+}
+
+
+// =========================================================
+// 목적지 깃발
+// =========================================================
+
+function getDestinationScreenY() {
+
+    const horizon = H * 0.38;
+    const truckY = H - 180;
+
+    const progress =
+        Math.max(
+            0,
+            Math.min(
+                truck.distance /
+                destination.distance,
+                1
+            )
+        );
+
+    // ★ 코스 전체에서 일정하게 이동
+    // 가까워질 때 갑자기 훅 내려오지 않는다.
+    const startY = horizon + 50;
+    const targetY = truckY + 20;
+
+    return startY +
+        progress *
+        (targetY - startY);
+}
+
+function getDestinationHitBox() {
+
+    const y = getDestinationScreenY();
+    const center = W / 2;
+
+    return {
+        left: center - 68,
+        right: center + 68,
+        top: y + 22,
+        bottom: y + 65
+    };
+}
+
+function isTruckTouchingDestination() {
+
+    const centerX =
+        getTruckScreenX();
+
+    const truckY =
+        H - 180;
+
+    const truckHit = {
+        left: centerX - 60,
+        right: centerX + 60,
+        top: truckY + 43,
+        bottom: truckY + 75
+    };
+
+    const goal =
+        getDestinationHitBox();
+
+    return (
+        truckHit.right >= goal.left &&
+        truckHit.left <= goal.right &&
+        truckHit.bottom >= goal.top &&
+        truckHit.top <= goal.bottom
+    );
+}
+
+function drawDestination() {
+
+    const y = getDestinationScreenY();
+
+    const center = W / 2;
+    const flagX = center - 28;
+
+    const progress =
+        Math.max(
+            0,
+            Math.min(
+                truck.distance /
+                destination.distance,
+                1
+            )
+        );
+
+    const size =
+        20 + progress * 8;
+
+    // 깃대
+    ctx.strokeStyle = "#ffffff";
+    ctx.lineWidth = 4;
+
+    ctx.beginPath();
+    ctx.moveTo(flagX, y + 42);
+    ctx.lineTo(flagX, y);
+    ctx.stroke();
+
+    // 깃발
+    ctx.fillStyle = "#ff3333";
+
+    ctx.beginPath();
+    ctx.moveTo(flagX, y);
+    ctx.lineTo(
+        flagX + size,
+        y + size * 0.55
+    );
+    ctx.lineTo(
+        flagX,
+        y + size
+    );
+    ctx.closePath();
+    ctx.fill();
+
+    // 목적지 글자
+    ctx.fillStyle = "#fff";
+    ctx.font = "bold 14px Arial";
+    ctx.textAlign = "center";
+
+    ctx.fillText(
+        "GOAL",
+        flagX,
+        y - 10
+    );
+
+    ctx.textAlign = "left";
+}
+
+
+// =========================================================
+// 트럭
+// =========================================================
+
+function drawTruck() {
+
+    const centerX =
+        getTruckScreenX();
+
+    const truckY =
+        H - 180;
+
+    const truckWidth = 120;
+    const truckHeight = 150;
+
+    // 그림자
+    ctx.fillStyle = "rgba(0,0,0,0.25)";
+
+    ctx.beginPath();
+
+    ctx.ellipse(
+        centerX,
+        truckY + 135,
+        80,
+        18,
+        0,
+        0,
+        Math.PI * 2
+    );
+
+    ctx.fill();
+
+
+    // 트럭 몸통
+    ctx.fillStyle = getTruckColor();
+
+    ctx.fillRect(
+        centerX - truckWidth / 2,
+        truckY + 45,
+        truckWidth,
+        70
+    );
+
+
+    // 캐빈
+    ctx.fillStyle =
+        vehicleLevel >= 3
+            ? "#263238"
+            : "#314c63";
+
+    ctx.fillRect(
+        centerX - 44,
+        truckY,
+        88,
+        65
+    );
+
+
+    // 앞유리
+    ctx.fillStyle = "#91d5ff";
+
+    ctx.fillRect(
+        centerX - 34,
+        truckY + 9,
+        68,
+        28
+    );
+
+
+    // 헤드라이트
+    ctx.fillStyle = "#fff6a8";
+
+    ctx.fillRect(
+        centerX - 50,
+        truckY + 50,
+        16,
+        12
+    );
+
+    ctx.fillRect(
+        centerX + 34,
+        truckY + 50,
+        16,
+        12
+    );
+
+
+    // 범퍼
+    ctx.fillStyle = "#777";
+
+    ctx.fillRect(
+        centerX - 60,
+        truckY + 105,
+        120,
+        12
+    );
+
+
+    // 바퀴
+    ctx.fillStyle = "#111";
+
+    const wheels = [
+        [centerX - 48, truckY + 105],
+        [centerX + 48, truckY + 105]
+    ];
+
+    for (const [wx, wy] of wheels) {
+
+        ctx.beginPath();
+
+        ctx.arc(
+            wx,
+            wy,
+            18,
+            0,
+            Math.PI * 2
+        );
+
+        ctx.fill();
+
+        ctx.fillStyle = "#777";
+
+        ctx.beginPath();
+
+        ctx.arc(
+            wx,
+            wy,
+            7,
+            0,
+            Math.PI * 2
+        );
+
+        ctx.fill();
+
+        ctx.fillStyle = "#111";
+    }
+}
+
+
+// =========================================================
+// HUD
+// =========================================================
+
+function drawHUD() {
+
+    const currentSpeed =
+        getCurrentKmh();
+
+    const maxSpeed =
+        getRealMaxSpeed();
+
+    const remaining =
+        Math.max(
+            0,
+            destination.distance -
+            truck.distance
+        );
+
+
+    ctx.textAlign = "left";
+
+    // 배경
+    ctx.fillStyle =
+        "rgba(0,0,0,0.48)";
+
+    ctx.fillRect(
+        15,
+        15,
+        310,
+        150
+    );
+
+
+    ctx.fillStyle = "#fff";
+
+    ctx.font = "bold 18px Arial";
+
+    ctx.fillText(
+        "🚚 레벨 " + level,
+        28,
+        43
+    );
+
+    ctx.font = "16px Arial";
+
+    ctx.fillText(
+        "💰 $" + money.toLocaleString(),
+        28,
+        68
+    );
+
+    ctx.fillText(
+        "🚛 " + getVehicleName(),
+        28,
+        93
+    );
+
+    ctx.fillText(
+        "🔧 " +
+        getEngineName() +
+        " x" +
+        getEngineMultiplier().toFixed(2),
+        28,
+        118
+    );
+
+    ctx.fillText(
+        "🎯 남은 거리: " +
+        remaining.toFixed(0) +
+        " m",
+        28,
+        143
+    );
+
+
+    // 연비
+    ctx.textAlign = "right";
+
+    ctx.fillText(
+        "⛽ 연비 x" +
+        getFuelEfficiency().toFixed(2),
+        W - 20,
+        35
+    );
+
+    ctx.textAlign = "left";
+}
+
+
+// =========================================================
+// 속도계
+// =========================================================
+
+function drawSpeedometer() {
+
+    const currentSpeed =
+        getCurrentKmh();
+
+    const maxSpeed =
+        getRealMaxSpeed();
+
+
+    const cx = W - 115;
+    const cy = H - 105;
+    const r = 80;
+
+
+    ctx.fillStyle =
+        "rgba(0,0,0,0.52)";
+
+    ctx.beginPath();
+
+    ctx.arc(
+        cx,
+        cy,
+        r,
+        0,
+        Math.PI * 2
+    );
+
+    ctx.fill();
+
+
+    ctx.strokeStyle = "#ddd";
+    ctx.lineWidth = 4;
+
+    ctx.beginPath();
+
+    ctx.arc(
+        cx,
+        cy,
+        r - 4,
+        0,
+        Math.PI * 2
+    );
+
+    ctx.stroke();
+
+
+    ctx.fillStyle = "#fff";
+    ctx.textAlign = "center";
+
+    ctx.font = "bold 25px Arial";
+
+    ctx.fillText(
+        Math.round(currentSpeed) + " km/h",
+        cx,
+        cy + 8
+    );
+
+    ctx.font = "14px Arial";
+
+    ctx.fillText(
+        "MAX " +
+        Math.round(maxSpeed) +
+        " km/h",
+        cx,
+        cy + 32
+    );
+}
+
+
+// =========================================================
+// 연료 게이지
+// =========================================================
+
+function drawFuelGauge() {
+
+    const x = 20;
+    const y = H - 65;
+
+    const width = 250;
+    const height = 25;
+
+
+    // 바탕
+    ctx.fillStyle =
+        "rgba(0,0,0,0.55)";
+
+    ctx.fillRect(
+        x - 5,
+        y - 30,
+        width + 10,
+        70
+    );
+
+
+    // 연료 %에 따른 색
+    if (fuel > 50) {
+        ctx.fillStyle = "#35d05f";
+    }
+    else if (fuel > 20) {
+        ctx.fillStyle = "#ffd43b";
+    }
+    else {
+        ctx.fillStyle = "#ff3b30";
+    }
+
+
+    // 게이지
+    const visualFuel = Math.max(
+        0,
+        Math.min(1, fuel / MAX_FUEL)
+    );
+
+    ctx.fillRect(
+        x,
+        y,
+        width * visualFuel,
+        height
+    );
+
+
+    // 테두리
+    ctx.strokeStyle = "#fff";
+    ctx.lineWidth = 2;
+
+    ctx.strokeRect(
+        x,
+        y,
+        width,
+        height
+    );
+
+
+    // 텍스트
+    ctx.fillStyle = "#fff";
+    ctx.textAlign = "left";
+    ctx.font = "bold 16px Arial";
+
+    ctx.fillText(
+        "⛽ 연료 " +
+        fuel.toFixed(1) +
+        "%",
+        x,
+        y - 8
+    );
+}
+
+
+// =========================================================
+// 게임월드 홈 버튼
+// =========================================================
+
+function drawHomeButton() {
+
+    const x = W - 325;
+    const y = 20;
+    const width = 145;
+    const height = 45;
+
+    ctx.fillStyle = "#263f48";
+
+    ctx.fillRect(
+        x,
+        y,
+        width,
+        height
+    );
+
+    ctx.strokeStyle = "#fff";
+    ctx.lineWidth = 2;
+
+    ctx.strokeRect(
+        x,
+        y,
+        width,
+        height
+    );
+
+    ctx.fillStyle = "#fff";
+    ctx.textAlign = "center";
+    ctx.font = "bold 18px Arial";
+
+    ctx.fillText(
+        "🏠 홈",
+        x + width / 2,
+        y + 29
+    );
+
+    ctx.textAlign = "left";
+}
+
+
+// =========================================================
+// 상점
+// =========================================================
+
+let shopOpen = false;
+
+function drawShopButton() {
+
+    const x = W - 160;
+    const y = 20;
+    const width = 140;
+    const height = 45;
+
+    ctx.fillStyle = "#ff9f1a";
+
+    ctx.fillRect(
+        x,
+        y,
+        width,
+        height
+    );
+
+    ctx.strokeStyle = "#fff";
+    ctx.lineWidth = 2;
+
+    ctx.strokeRect(
+        x,
+        y,
+        width,
+        height
+    );
+
+    ctx.fillStyle = "#fff";
+    ctx.textAlign = "center";
+    ctx.font = "bold 18px Arial";
+
+    ctx.fillText(
+        "🏪 상점",
+        x + width / 2,
+        y + 29
+    );
+
+    ctx.textAlign = "left";
+}
+
+function drawShop() {
+
+    drawShopButton();
+
+    if (!shopOpen) {
+        return;
+    }
+
+
+    // 전체 어둡게
+    ctx.fillStyle =
+        "rgba(0,0,0,0.65)";
+
+    ctx.fillRect(
+        0,
+        0,
+        W,
+        H
+    );
+
+
+    const shopW = Math.min(820, W - 40);
+    const shopH = Math.min(620, H - 30);
+
+    const shopX =
+        W / 2 - shopW / 2;
+
+    const shopY =
+        H / 2 - shopH / 2;
+
+
+    // 상점 박스
+    ctx.fillStyle = "#222";
+
+    ctx.fillRect(
+        shopX,
+        shopY,
+        shopW,
+        shopH
+    );
+
+
+    ctx.strokeStyle = "#fff";
+    ctx.lineWidth = 3;
+
+    ctx.strokeRect(
+        shopX,
+        shopY,
+        shopW,
+        shopH
+    );
+
+
+    // 제목
+    ctx.fillStyle = "#fff";
+    ctx.textAlign = "center";
+    ctx.font = "bold 30px Arial";
+
+    ctx.fillText(
+        "🏪 트럭 상점",
+        W / 2,
+        shopY + 45
+    );
+
+
+    // -----------------------------------------------------
+    // 차량 업그레이드
+    // -----------------------------------------------------
+
+    const boxY = shopY + 80;
+    const boxW = shopW - 60;
+    const boxX = shopX + 30;
+
+    ctx.fillStyle = "#313131";
+
+    ctx.fillRect(
+        boxX,
+        boxY,
+        boxW,
+        125
+    );
+
+    ctx.strokeStyle = "#666";
+    ctx.lineWidth = 2;
+
+    ctx.strokeRect(
+        boxX,
+        boxY,
+        boxW,
+        125
+    );
+
+
+    ctx.fillStyle = "#fff";
+    ctx.textAlign = "left";
+    ctx.font = "bold 20px Arial";
+
+    ctx.fillText(
+        "🚛 차량 업그레이드",
+        boxX + 20,
+        boxY + 30
+    );
+
+    ctx.font = "16px Arial";
+
+    ctx.fillText(
+        "현재: " + getVehicleName(),
+        boxX + 20,
+        boxY + 58
+    );
+
+    ctx.fillText(
+        "최고속도: " +
+        Math.round(getRealMaxSpeed()) +
+        " km/h",
+        boxX + 20,
+        boxY + 84
+    );
+
+
+    const nextVehicle =
+        maxOwnedVehicleLevel + 1;
+
+    const vehiclePrice =
+        getVehiclePrice(nextVehicle);
+
+
+    ctx.fillStyle =
+        nextVehicle > maxOwnedVehicleLevel
+            ? "#3ddc84"
+            : "#aaa";
+
+
+    ctx.textAlign = "right";
+    ctx.font = "bold 16px Arial";
+
+    ctx.fillText(
+        "다음: Lv." +
+        nextVehicle +
+        "  $" +
+        vehiclePrice.toLocaleString(),
+        boxX + boxW - 20,
+        boxY + 35
+    );
+
+
+    // 차량 구매 버튼
+    drawButton(
+        boxX + boxW - 170,
+        boxY + 60,
+        140,
+        45,
+        "차량 구매"
+    );
+
+
+    // -----------------------------------------------------
+    // 엔진
+    // -----------------------------------------------------
+
+    const engineBoxY =
+        boxY + 145;
+
+    ctx.fillStyle = "#313131";
+
+    ctx.fillRect(
+        boxX,
+        engineBoxY,
+        boxW,
+        125
+    );
+
+    ctx.strokeStyle = "#666";
+
+    ctx.strokeRect(
+        boxX,
+        engineBoxY,
+        boxW,
+        125
+    );
+
+
+    ctx.fillStyle = "#fff";
+    ctx.textAlign = "left";
+    ctx.font = "bold 20px Arial";
+
+    ctx.fillText(
+        "🔧 엔진 업그레이드",
+        boxX + 20,
+        engineBoxY + 30
+    );
+
+    ctx.font = "16px Arial";
+
+    ctx.fillText(
+        "현재: " + getEngineName(),
+        boxX + 20,
+        engineBoxY + 58
+    );
+
+    ctx.fillText(
+        "엔진 배율: x" +
+        getEngineMultiplier().toFixed(2),
+        boxX + 20,
+        engineBoxY + 84
+    );
+
+
+    const nextEngine =
+        maxOwnedEngineLevel + 1;
+
+    const enginePrice =
+        getEnginePrice(nextEngine);
+
+
+    ctx.textAlign = "right";
+    ctx.font = "bold 16px Arial";
+
+    ctx.fillText(
+        "다음: Lv." +
+        nextEngine +
+        "  $" +
+        enginePrice.toLocaleString(),
+        boxX + boxW - 20,
+        engineBoxY + 35
+    );
+
+
+    drawButton(
+        boxX + boxW - 170,
+        engineBoxY + 60,
+        140,
+        45,
+        "엔진 구매"
+    );
+
+
+    // -----------------------------------------------------
+    // 연료
+    // -----------------------------------------------------
+
+    const fuelBoxY =
+        engineBoxY + 145;
+
+    ctx.fillStyle = "#313131";
+
+    ctx.fillRect(
+        boxX,
+        fuelBoxY,
+        boxW,
+        125
+    );
+
+    ctx.strokeStyle = "#666";
+
+    ctx.strokeRect(
+        boxX,
+        fuelBoxY,
+        boxW,
+        125
+    );
+
+
+    ctx.fillStyle = "#fff";
+    ctx.textAlign = "left";
+    ctx.font = "bold 20px Arial";
+
+    ctx.fillText(
+        "⛽ 연료 구매",
+        boxX + 20,
+        fuelBoxY + 30
+    );
+
+    ctx.font = "16px Arial";
+
+    ctx.fillText(
+        "현재 연료: " +
+        fuel.toFixed(1) +
+        "%",
+        boxX + 20,
+        fuelBoxY + 60
+    );
+
+
+    // 연료 버튼 3개
+    drawButton(
+        boxX + 20,
+        fuelBoxY + 72,
+        130,
+        40,
+        "+25%  $300"
+    );
+
+    drawButton(
+        boxX + 170,
+        fuelBoxY + 72,
+        130,
+        40,
+        "+50%  $550"
+    );
+
+    drawButton(
+        boxX + 320,
+        fuelBoxY + 72,
+        140,
+        40,
+        "+100%  $1000"
+    );
+
+
+    // 닫기
+    drawButton(
+        W / 2 - 70,
+        shopY + shopH - 55,
+        140,
+        40,
+        "상점 닫기"
+    );
+
+
+    ctx.textAlign = "left";
+}
+
+
+// =========================================================
+// 버튼
+// =========================================================
+
+function drawButton(
+    x,
+    y,
+    width,
+    height,
+    text
+) {
+
+    ctx.fillStyle = "#404040";
+
+    ctx.fillRect(
+        x,
+        y,
+        width,
+        height
+    );
+
+    ctx.strokeStyle = "#aaa";
+    ctx.lineWidth = 2;
+
+    ctx.strokeRect(
+        x,
+        y,
+        width,
+        height
+    );
+
+    ctx.fillStyle = "#fff";
+
+    ctx.textAlign = "center";
+
+    ctx.font = "bold 15px Arial";
+
+    ctx.fillText(
+        text,
+        x + width / 2,
+        y + height / 2 + 5
+    );
+
+    ctx.textAlign = "left";
+}
+
+
+// =========================================================
+// 팝업 그리기
+// =========================================================
+
+function drawModal() {
+
+    if (!modal.visible) {
+        return;
+    }
+
+
+    // 어두운 배경
+    ctx.fillStyle =
+        "rgba(0,0,0,0.72)";
+
+    ctx.fillRect(
+        0,
+        0,
+        W,
+        H
+    );
+
+
+    const boxW = Math.min(500, W - 60);
+    const boxH = 250;
+
+    const boxX =
+        W / 2 - boxW / 2;
+
+    const boxY =
+        H / 2 - boxH / 2;
+
+
+    // 박스
+    ctx.fillStyle = "#252525";
+
+    ctx.fillRect(
+        boxX,
+        boxY,
+        boxW,
+        boxH
+    );
+
+
+    ctx.strokeStyle = "#fff";
+    ctx.lineWidth = 3;
+
+    ctx.strokeRect(
+        boxX,
+        boxY,
+        boxW,
+        boxH
+    );
+
+
+    // 제목
+    ctx.fillStyle = "#fff";
+    ctx.textAlign = "center";
+
+    ctx.font = "bold 28px Arial";
+
+    ctx.fillText(
+        modal.title,
+        W / 2,
+        boxY + 55
+    );
+
+
+    // 메시지
+    ctx.font = "18px Arial";
+
+    const lines =
+        modal.message.split("\n");
+
+    let textY =
+        boxY + 95;
+
+    for (const line of lines) {
+
+        ctx.fillText(
+            line,
+            W / 2,
+            textY
+        );
+
+        textY += 28;
+    }
+
+
+    // 버튼
+    const buttonW = 150;
+    const buttonH = 45;
+
+    const buttonX =
+        W / 2 - buttonW / 2;
+
+    const buttonY =
+        boxY + boxH - 65;
+
+
+    ctx.fillStyle = "#1976d2";
+
+    ctx.fillRect(
+        buttonX,
+        buttonY,
+        buttonW,
+        buttonH
+    );
+
+    ctx.strokeStyle = "#fff";
+
+    ctx.strokeRect(
+        buttonX,
+        buttonY,
+        buttonW,
+        buttonH
+    );
+
+
+    ctx.fillStyle = "#fff";
+
+    ctx.font = "bold 17px Arial";
+
+    ctx.fillText(
+        modal.button,
+        W / 2,
+        buttonY + 29
+    );
+
+
+    ctx.textAlign = "left";
+}
+
+
+// =========================================================
+// 클릭 처리
+// =========================================================
+
+canvas.addEventListener("click", (e) => {
+
+    const rect =
+        canvas.getBoundingClientRect();
+
+    const mouseX =
+        e.clientX - rect.left;
+
+    const mouseY =
+        e.clientY - rect.top;
+
+
+    // -----------------------------------------------------
+    // 팝업
+    // -----------------------------------------------------
+
+    if (modal.visible) {
+
+        const boxW =
+            Math.min(500, W - 60);
+
+        const boxH = 250;
+
+        const boxY =
+            H / 2 - boxH / 2;
+
+        const buttonW = 150;
+        const buttonH = 45;
+
+        const buttonX =
+            W / 2 - buttonW / 2;
+
+        const buttonY =
+            boxY + boxH - 65;
+
+
+        if (
+            mouseX >= buttonX &&
+            mouseX <= buttonX + buttonW &&
+            mouseY >= buttonY &&
+            mouseY <= buttonY + buttonH
+        ) {
+
+            closeModal();
+        }
+
+        return;
+    }
+
+
+    // -----------------------------------------------------
+    // 게임월드 홈 버튼
+    // -----------------------------------------------------
+
+    const homeButtonX = W - 325;
+    const homeButtonY = 20;
+    const homeButtonW = 145;
+    const homeButtonH = 45;
+
+    if (
+        mouseX >= homeButtonX &&
+        mouseX <= homeButtonX + homeButtonW &&
+        mouseY >= homeButtonY &&
+        mouseY <= homeButtonY + homeButtonH
+    ) {
+
+        clearKeys();
+
+        window.location.href = "index.html";
+
+        return;
+    }
+
+
+    // -----------------------------------------------------
+    // 상점 열기 버튼
+    // -----------------------------------------------------
+
+    const shopButtonX = W - 160;
+    const shopButtonY = 20;
+    const shopButtonW = 140;
+    const shopButtonH = 45;
+
+
+    if (
+        mouseX >= shopButtonX &&
+        mouseX <= shopButtonX + shopButtonW &&
+        mouseY >= shopButtonY &&
+        mouseY <= shopButtonY + shopButtonH
+    ) {
+
+        shopOpen = !shopOpen;
+
+        clearKeys();
+
+        return;
+    }
+
+
+    // -----------------------------------------------------
+    // 상점 내부
+    // -----------------------------------------------------
+
+    if (!shopOpen) {
+        return;
+    }
+
+
+    const shopW =
+        Math.min(760, W - 40);
+
+    const shopH =
+        Math.min(610, H - 40);
+
+    const shopX =
+        W / 2 - shopW / 2;
+
+    const shopY =
+        H / 2 - shopH / 2;
+
+
+    const boxW = shopW - 60;
+    const boxX = shopX + 30;
+
+
+    // -----------------------------------------------------
+    // 닫기
+    // -----------------------------------------------------
+
+    const closeW = 140;
+    const closeH = 40;
+
+    const closeX =
+        W / 2 - closeW / 2;
+
+    const closeY =
+        shopY + shopH - 55;
+
+
+    if (
+        mouseX >= closeX &&
+        mouseX <= closeX + closeW &&
+        mouseY >= closeY &&
+        mouseY <= closeY + closeH
+    ) {
+
+        shopOpen = false;
+
+        clearKeys();
+
+        return;
+    }
+
+
+    // -----------------------------------------------------
+    // 차량 구매
+    // -----------------------------------------------------
+
+    const boxY = shopY + 80;
+
+    const vehicleButtonX =
+        boxX + boxW - 170;
+
+    const vehicleButtonY =
+        boxY + 60;
+
+    if (
+        mouseX >= vehicleButtonX &&
+        mouseX <= vehicleButtonX + 140 &&
+        mouseY >= vehicleButtonY &&
+        mouseY <= vehicleButtonY + 45
+    ) {
+
+        buyVehicle();
+
+        return;
+    }
+
+
+    // -----------------------------------------------------
+    // 엔진 구매
+    // -----------------------------------------------------
+
+    const engineBoxY =
+        boxY + 145;
+
+    const engineButtonX =
+        boxX + boxW - 170;
+
+    const engineButtonY =
+        engineBoxY + 60;
+
+
+    if (
+        mouseX >= engineButtonX &&
+        mouseX <= engineButtonX + 140 &&
+        mouseY >= engineButtonY &&
+        mouseY <= engineButtonY + 45
+    ) {
+
+        buyEngine();
+
+        return;
+    }
+
+
+    // -----------------------------------------------------
+    // 연료 구매
+    // -----------------------------------------------------
+
+    const fuelBoxY =
+        engineBoxY + 145;
+
+
+    // +25
+    if (
+        mouseX >= boxX + 20 &&
+        mouseX <= boxX + 150 &&
+        mouseY >= fuelBoxY + 72 &&
+        mouseY <= fuelBoxY + 112
+    ) {
+
+        buyFuel(25, 300);
+
+        return;
+    }
+
+
+    // +50
+    if (
+        mouseX >= boxX + 170 &&
+        mouseX <= boxX + 300 &&
+        mouseY >= fuelBoxY + 72 &&
+        mouseY <= fuelBoxY + 112
+    ) {
+
+        buyFuel(50, 550);
+
+        return;
+    }
+
+
+    // +100
+    if (
+        mouseX >= boxX + 320 &&
+        mouseX <= boxX + 460 &&
+        mouseY >= fuelBoxY + 72 &&
+        mouseY <= fuelBoxY + 112
+    ) {
+
+        buyFuel(100, 1000);
+
+        return;
+    }
+});
+
+
+// =========================================================
+// 차량 구매
+// =========================================================
+
+function buyVehicle() {
+
+    const nextLevel =
+        maxOwnedVehicleLevel + 1;
+
+    const price =
+        getVehiclePrice(nextLevel);
+
+
+    if (money < price) {
+
+        showModal(
+            "💰 돈 부족",
+            "차량 업그레이드에\n" +
+            "$" + price.toLocaleString() +
+            "이 필요합니다."
+        );
+
+        return;
+    }
+
+
+    money -= price;
+
+    maxOwnedVehicleLevel =
+        nextLevel;
+
+    vehicleLevel =
+        nextLevel;
+
+    truck.speed = 0;
+    clearKeys();
+
+
+    showModal(
+        "🚛 차량 업그레이드!",
+        getVehicleName() +
+        "을(를) 구입했습니다.\n\n" +
+        "최고속도: " +
+        Math.round(getRealMaxSpeed()) +
+        " km/h",
+        null,
+        "확인"
+    );
+}
+
+
+// =========================================================
+// 엔진 구매
+// =========================================================
+
+function buyEngine() {
+
+    const nextLevel =
+        maxOwnedEngineLevel + 1;
+
+    const price =
+        getEnginePrice(nextLevel);
+
+
+    if (money < price) {
+
+        showModal(
+            "💰 돈 부족",
+            "엔진 업그레이드에\n" +
+            "$" + price.toLocaleString() +
+            "이 필요합니다."
+        );
+
+        return;
+    }
+
+
+    money -= price;
+
+    maxOwnedEngineLevel =
+        nextLevel;
+
+    engineLevel =
+        nextLevel;
+
+    truck.speed = 0;
+    clearKeys();
+
+
+    showModal(
+        "🔧 엔진 업그레이드!",
+        getEngineName() +
+        "을(를) 구입했습니다.\n\n" +
+        "엔진 배율: x" +
+        getEngineMultiplier().toFixed(2) +
+        "\n연비: x" +
+        getFuelEfficiency().toFixed(2),
+        null,
+        "확인"
+    );
+}
+
+
+// =========================================================
+// 연료 구매
+// =========================================================
+
+function buyFuel(amount, price) {
+
+    if (money < price) {
+
+        showModal(
+            "💰 돈 부족",
+            "연료를 구매하려면\\n" +
+            "$" +
+            price.toLocaleString() +
+            "이 필요합니다."
+        );
+
+        return;
+    }
+
+    money -= price;
+    fuel += amount;
+
+    // ★ 100%를 넘어가도 누적
+    showModal(
+        "⛽ 연료 충전",
+        "연료 +" +
+        amount +
+        "%\\n\\n" +
+        "현재 연료: " +
+        fuel.toFixed(1) +
+        "%",
+        null,
+        "확인"
+    );
+}
+
+
+// =========================================================
+// 게임 시작
+// =========================================================
+
+createDestination();
+
+
+// =========================================================
+// 게임 루프
+// =========================================================
+
+function gameLoop() {
+
+    updateTruck();
+
+    drawSky();
+    drawGround();
+    drawScenery();
+    drawRoad();
+    drawDestination();
+    drawObstacles();
+    drawTruck();
+
+    drawHUD();
+    drawSpeedometer();
+    drawFuelGauge();
+
+    drawShop();
+    drawHomeButton();
+
+    drawModal();
+
+    requestAnimationFrame(gameLoop);
+}
+
+
+gameLoop();
+
+canvas.focus();
+
+</script>
+
+</body>
+</html>
