@@ -1,0 +1,9464 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>농사 게임</title>
+
+<style>
+*{
+  box-sizing:border-box;
+}
+
+body{
+  margin:0;
+  font-family:Arial,"Malgun Gothic",sans-serif;
+  color:#202820;
+  background:linear-gradient(
+    #8bd8f7 0 740px,
+    #70d957 740px 100%
+  );
+}
+
+button,
+input,
+select{
+  font:inherit;
+}
+
+button{
+  cursor:pointer;
+}
+
+#app{
+  width:min(1100px,96vw);
+  margin:auto;
+  padding:10px 0 50px;
+}
+
+/* =========================
+   상단
+========================= */
+
+.stats{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:10px;
+  margin-bottom:12px;
+}
+
+.stat{
+  background:#fff;
+  border:3px solid #62aa50;
+  border-radius:15px;
+  padding:9px;
+  text-align:center;
+  box-shadow:0 2px 0 rgba(0,0,0,.07);
+}
+
+.stat-label{
+  font-size:14px;
+  color:#444;
+  margin-bottom:3px;
+}
+
+.stat-value{
+  font-size:26px;
+  font-weight:900;
+}
+
+/* =========================
+   숲농장
+========================= */
+
+.forest-link{
+  margin-top:9px;
+  width:100%;
+  padding:10px 12px;
+  border:3px solid #6b9b4b;
+  border-radius:12px;
+  background:#eef9e9;
+  font-size:15px;
+  font-weight:900;
+}
+
+.forest-grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:9px;
+}
+
+.forest-card{
+  border:2px solid #c7d9c1;
+  border-radius:12px;
+  background:#f8fcf5;
+  padding:10px;
+}
+
+.forest-card.active{
+  border-color:#67a24f;
+  background:#eff9ea;
+}
+
+.forest-name{
+  font-size:16px;
+  font-weight:900;
+}
+
+.forest-meta{
+  margin-top:5px;
+  font-size:11px;
+  color:#657066;
+  line-height:1.45;
+}
+
+.forest-row{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:6px;
+  margin-top:8px;
+}
+
+.forest-btn{
+  border:2px solid #6da759;
+  border-radius:10px;
+  padding:8px;
+  background:#fff;
+  font-weight:900;
+}
+
+.forest-btn.active{
+  box-shadow:0 0 0 3px rgba(101,183,91,.22);
+  transform:translateY(-1px);
+}
+
+.forest-btn:disabled{
+  opacity:.45;
+  cursor:not-allowed;
+}
+
+.forest-wood{
+  margin-top:9px;
+  padding:9px;
+  border:2px solid #dbc8a6;
+  border-radius:10px;
+  background:#fffaf1;
+  font-size:12px;
+  font-weight:900;
+}
+
+.forest-summary{
+  display:flex;
+  justify-content:space-between;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-bottom:10px;
+  padding:10px;
+  background:#f4fbef;
+  border:2px solid #c6ddba;
+  border-radius:12px;
+  font-weight:900;
+}
+
+.forest-summary-main{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  flex-wrap:wrap;
+}
+
+.forest-expand{
+  border:2px solid #6da759;
+  border-radius:10px;
+  padding:8px 11px;
+  background:#fff;
+  font-weight:900;
+}
+
+.forest-expand:disabled{
+  opacity:.45;
+  cursor:not-allowed;
+}
+
+.forest-slots{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:9px;
+  margin-top:10px;
+}
+
+.forest-slot{
+  min-height:140px;
+  border:2px dashed #abc89f;
+  border-radius:12px;
+  background:#fbfff9;
+  padding:10px;
+  text-align:center;
+}
+
+.forest-slot-icon{
+  font-size:34px;
+}
+
+.forest-empty{
+  color:#788278;
+  font-size:12px;
+  font-weight:800;
+  margin-top:18px;
+}
+
+@media(max-width:800px){
+  .forest-grid,
+  .forest-slots{
+    grid-template-columns:1fr;
+  }
+}
+
+/* =========================
+   공통 패널
+========================= */
+
+.panel{
+  background:#fff;
+  border:3px solid #63aa52;
+  border-radius:17px;
+  padding:14px;
+  margin-bottom:12px;
+  box-shadow:0 2px 0 rgba(0,0,0,.07);
+}
+
+.title{
+  font-size:24px;
+  font-weight:900;
+  margin:0 0 10px;
+}
+
+.small-note{
+  background:#edf8ff;
+  border:2px solid #bad8ea;
+  border-radius:12px;
+  padding:10px;
+  font-size:12px;
+  line-height:1.45;
+}
+
+/* =========================
+   월드
+========================= */
+
+.world-list{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:9px;
+}
+
+.world-card{
+  border:2px solid #c7d9c1;
+  background:#f8fcf5;
+  border-radius:12px;
+  padding:10px;
+}
+
+.world-card.active{
+  border:3px solid #62aa50;
+  background:#eef9ea;
+}
+
+.world-name{
+  font-size:17px;
+  font-weight:900;
+}
+
+.world-status{
+  font-size:11px;
+  color:#677267;
+  margin-top:4px;
+}
+
+.world-actions{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:5px;
+  margin-top:8px;
+}
+
+.world-select,
+.world-rename,
+.world-delete{
+  width:100%;
+  border:0;
+  border-radius:8px;
+  color:#fff;
+  padding:7px;
+  font-size:12px;
+  font-weight:900;
+}
+
+.world-select{
+  background:#63ad4d;
+}
+
+.world-rename{
+  background:#4a8dda;
+}
+
+.world-delete{
+  background:#e26363;
+  grid-column:1/-1;
+}
+
+.world-select:disabled,
+.world-delete:disabled{
+  background:#999;
+  cursor:not-allowed;
+}
+
+.world-new{
+  margin-top:9px;
+  width:100%;
+  border:0;
+  border-radius:10px;
+  background:#6b4de1;
+  color:#fff;
+  padding:10px;
+  font-size:14px;
+  font-weight:900;
+}
+
+.current-world{
+  background:#fff6c9;
+  border:2px solid #d8b434;
+  border-radius:10px;
+  padding:8px;
+  margin-bottom:9px;
+  font-size:12px;
+  font-weight:900;
+}
+
+/* =========================
+   레이아웃
+========================= */
+
+.layout{
+  display:grid;
+  grid-template-columns:1.55fr 1fr;
+  gap:12px;
+  align-items:start;
+}
+
+/* =========================
+   랜덤박스
+========================= */
+
+.gacha{
+  position:relative;
+  background:linear-gradient(#fff7c7,#ffe285);
+  border:3px solid #d7ae16;
+  border-radius:16px;
+  min-height:330px;
+  padding:52px 12px 14px;
+  box-sizing:border-box;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  text-align:center;
+}
+
+.gacha-auto-toggle{
+  position:absolute;
+  top:10px;
+  left:10px;
+  display:flex;
+  align-items:center;
+  gap:5px;
+  padding:6px 8px;
+  border-radius:9px;
+  background:rgba(255,255,255,.82);
+  border:2px solid #d8b434;
+  font-size:11px;
+  font-weight:900;
+}
+
+.gacha-nav{
+  width:100%;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:7px;
+  margin-bottom:7px;
+}
+
+.gacha-arrow{
+  width:38px;
+  height:38px;
+  border:0;
+  border-radius:11px;
+  background:#fff;
+  border:2px solid #d8b434;
+  font-size:18px;
+  font-weight:900;
+}
+
+.gacha-arrow:disabled{
+  opacity:.35;
+}
+
+.gacha-tier-title{
+  min-width:0;
+}
+
+.gacha-tier-name{
+  font-size:16px;
+  font-weight:900;
+}
+
+.gacha-tier-cost{
+  margin-top:2px;
+  font-size:12px;
+  font-weight:900;
+}
+
+.gacha-probabilities{
+  width:100%;
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:5px;
+  margin:6px 0 9px;
+}
+
+.gacha-probabilities span{
+  padding:5px 6px;
+  border-radius:8px;
+  background:rgba(255,255,255,.72);
+  font-size:10px;
+  font-weight:900;
+}
+
+.gacha-upgrade-btn{
+  width:100%;
+  margin-top:7px;
+  border:0;
+  border-radius:10px;
+  background:#7950b5;
+  color:#fff;
+  padding:9px 10px;
+  font-size:12px;
+  font-weight:900;
+}
+
+.gacha-next-note{
+  margin-top:7px;
+  font-size:10px;
+  font-weight:900;
+}
+
+.gacha-reserve-note{
+  margin-top:7px;
+  font-size:10px;
+  color:#5d665d;
+  font-weight:800;
+}
+
+.gift{
+  font-size:84px;
+  line-height:1;
+}
+
+.gacha-name{
+  font-size:26px;
+  font-weight:900;
+  margin-top:6px;
+}
+
+.gacha-price{
+  margin:5px 0 12px;
+  font-size:16px;
+  font-weight:900;
+}
+
+.gacha-btn{
+  border:0;
+  border-radius:12px;
+  background:#999;
+  color:#fff;
+  padding:13px 23px;
+  font-size:17px;
+  font-weight:900;
+}
+
+.result{
+  min-height:24px;
+  margin-top:12px;
+  font-size:14px;
+  font-weight:900;
+}
+
+/* =========================
+   씨앗
+========================= */
+
+.seed-grid{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:10px;
+}
+
+.seed-card{
+  background:#f8fcf5;
+  border:2px solid #c5d9bd;
+  border-radius:12px;
+  padding:10px;
+  min-height:163px;
+}
+
+.seed-head{
+  display:flex;
+  justify-content:space-between;
+  gap:8px;
+}
+
+.seed-name{
+  font-size:17px;
+  font-weight:900;
+}
+
+.seed-count{
+  background:#65ad4f;
+  color:#fff;
+  border-radius:999px;
+  padding:4px 9px;
+  font-size:12px;
+  font-weight:900;
+}
+
+.rarity{
+  margin-top:4px;
+  font-size:12px;
+  font-weight:900;
+}
+
+.normal{color:#567a4f}
+.high{color:#218640}
+.rare{color:#406bb5}
+.legend{color:#a14bc2}
+
+.seed-info{
+  font-size:12px;
+  line-height:1.48;
+  margin:6px 0 8px;
+  color:#404940;
+}
+
+.seed-btn{
+  width:100%;
+  border:0;
+  border-radius:9px;
+  background:#63ad4d;
+  color:#fff;
+  padding:9px;
+  font-weight:900;
+}
+
+.seed-btn:disabled{
+  background:#999;
+}
+
+/* =========================
+   시장
+========================= */
+
+.market-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:8px;
+}
+
+.refresh{
+  border:0;
+  border-radius:8px;
+  background:#eef3f7;
+  padding:6px 9px;
+  font-size:12px;
+  font-weight:900;
+}
+
+.crop-tabs{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+  margin:10px 0;
+}
+
+.crop-tab{
+  border:0;
+  border-radius:10px;
+  background:#edf0f4;
+  padding:7px 10px;
+  font-size:12px;
+  font-weight:900;
+}
+
+.crop-tab.active{
+  background:#2f6fd0;
+  color:#fff;
+}
+
+.graph-box{
+  border:2px solid #c8dfe9;
+  border-radius:14px;
+  padding:9px;
+  background:#fbfdff;
+}
+
+canvas{
+  width:100%;
+  height:210px;
+  display:block;
+}
+
+.graph-legend{
+  font-size:11px;
+  margin-top:2px;
+}
+
+.dot-blue{color:#2d6ccf}
+.dot-orange{color:#d58b16}
+
+.graph-stats{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:6px;
+  margin-top:8px;
+}
+
+.gstat{
+  background:#fff;
+  border:2px solid #ddd;
+  border-radius:10px;
+  padding:7px;
+  text-align:center;
+}
+
+.gstat-label{
+  font-size:10px;
+  color:#666;
+}
+
+.gstat-value{
+  font-size:15px;
+  font-weight:900;
+  margin-top:2px;
+}
+
+/* =========================
+   가격
+========================= */
+
+.price-list{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+
+.price-card{
+  background:#fff;
+  border:2px solid #ddd;
+  border-radius:13px;
+  padding:10px;
+}
+
+.price-top{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:8px;
+}
+
+.price-name{
+  font-size:16px;
+  font-weight:900;
+}
+
+.price-num{
+  font-size:19px;
+  font-weight:900;
+}
+
+.up{color:#19924a}
+.down{color:#c83a3a}
+.same{color:#444}
+
+.price-sub{
+  font-size:11px;
+  color:#6b736b;
+  margin:4px 0 7px;
+}
+
+.sell1,
+.sellall{
+  width:100%;
+  border:0;
+  border-radius:8px;
+  color:#fff;
+  padding:8px;
+  font-weight:900;
+}
+
+.sell1{
+  background:#4386dd;
+  margin-bottom:5px;
+}
+
+.sellall{
+  background:#664fe0;
+}
+
+.sell1:disabled,
+.sellall:disabled{
+  opacity:.55;
+}
+
+/* =========================
+   농장 페이지
+========================= */
+
+.farm-tabs{
+  display:flex;
+  flex-wrap:wrap;
+  gap:7px;
+  align-items:center;
+  margin-bottom:9px;
+}
+
+.farm-tab{
+  border:0;
+  border-radius:10px;
+  background:#e2e9df;
+  padding:8px 12px;
+  font-size:12px;
+  font-weight:900;
+  user-select:none;
+}
+
+.farm-tab.active{
+  background:#63ac4e;
+  color:#fff;
+}
+
+.farm-tab-add{
+  border:0;
+  border-radius:10px;
+  background:#6b4de1;
+  color:#fff;
+  padding:8px 12px;
+  font-size:12px;
+  font-weight:900;
+}
+
+.page-price-note{
+  background:#fff6c9;
+  border:2px solid #d8b434;
+  border-radius:10px;
+  padding:8px 10px;
+  font-size:11px;
+  font-weight:900;
+  margin-bottom:9px;
+}
+
+.farm-info{
+  background:#edf8ff;
+  border:2px solid #bad8ea;
+  border-radius:11px;
+  padding:9px;
+  font-size:12px;
+  margin-bottom:8px;
+}
+
+.plot-row{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:10px;
+}
+
+.plot{
+  min-height:275px;
+  background:#ad713f;
+  border:5px solid #855028;
+  border-radius:16px;
+  padding:12px;
+  position:relative;
+  text-align:center;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  color:#fff;
+  overflow:hidden;
+}
+
+.plot-no{
+  position:absolute;
+  left:8px;
+  top:8px;
+  background:#6b3d1f;
+  border-radius:7px;
+  padding:4px 7px;
+  font-size:11px;
+  font-weight:900;
+}
+
+.plot-icon{
+  font-size:78px;
+  line-height:1;
+}
+
+.plot-name{
+  font-size:20px;
+  font-weight:900;
+  margin-top:7px;
+  text-shadow:0 2px 2px rgba(0,0,0,.35);
+}
+
+.plot-time{
+  font-size:15px;
+  font-weight:900;
+  margin-top:3px;
+}
+
+.plot-note{
+  font-size:12px;
+  margin-top:7px;
+}
+
+.plot-life{
+  font-size:11px;
+  margin-top:4px;
+  color:#fff4b3;
+  font-weight:900;
+}
+
+.progress{
+  height:9px;
+  width:86%;
+  background:rgba(255,255,255,.25);
+  border-radius:999px;
+  overflow:hidden;
+  margin-top:10px;
+}
+
+.progress>div{
+  height:100%;
+  background:#2eb2e6;
+}
+
+.ready-btn{
+  margin-top:8px;
+  border:0;
+  border-radius:9px;
+  background:#ffd84e;
+  padding:8px 13px;
+  color:#5d4300;
+  font-weight:900;
+}
+
+.uproot-btn{
+  margin-top:6px;
+  border:0;
+  border-radius:9px;
+  background:#e86c55;
+  padding:7px 11px;
+  color:#fff;
+  font-size:11px;
+  font-weight:900;
+}
+
+.empty{
+  background:repeating-linear-gradient(
+    135deg,
+    #ad713f 0 10px,
+    #9c6237 10px 20px
+  );
+}
+
+.land-row{
+  display:flex;
+  gap:7px;
+  align-items:center;
+  justify-content:space-between;
+  background:#f4f8f2;
+  border:2px dashed #bfd0b8;
+  border-radius:10px;
+  padding:8px;
+  margin-top:8px;
+}
+
+.land-price{
+  font-size:12px;
+  font-weight:900;
+}
+
+.land-buy{
+  border:0;
+  border-radius:8px;
+  background:#65ad4f;
+  color:#fff;
+  padding:7px 9px;
+  font-weight:900;
+}
+
+/* =========================
+   작물 설명
+========================= */
+
+.crop-info-grid{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:9px;
+  margin-top:9px;
+}
+
+.crop-info-card{
+  background:#f8fcf5;
+  border:2px solid #c7dabb;
+  border-radius:12px;
+  padding:10px;
+}
+
+.crop-info-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:7px;
+}
+
+.crop-info-name{
+  font-size:16px;
+  font-weight:900;
+}
+
+.crop-info-rarity{
+  font-size:10px;
+  font-weight:900;
+  border-radius:999px;
+  background:#e7eee2;
+  padding:3px 7px;
+}
+
+.crop-info-line{
+  font-size:11px;
+  line-height:1.55;
+  margin-top:5px;
+  color:#566056;
+}
+
+.crop-info-price{
+  margin-top:7px;
+  background:#edf8ff;
+  border:1px solid #c1dce9;
+  border-radius:8px;
+  padding:7px;
+  font-size:11px;
+  font-weight:900;
+}
+
+.crop-info-max{
+  color:#d07b16;
+}
+
+/* =========================
+   수확물
+========================= */
+
+.harvest-grid{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:8px;
+}
+
+.harvest-card{
+  background:#f8fcf5;
+  border:2px solid #c7dabb;
+  border-radius:11px;
+  padding:10px;
+}
+
+.harvest-head{
+  display:flex;
+  justify-content:space-between;
+  font-weight:900;
+}
+
+.qty{
+  background:#65ad4f;
+  color:#fff;
+  border-radius:999px;
+  padding:3px 8px;
+  font-size:11px;
+}
+
+/* =========================
+   자동 기능
+========================= */
+
+.auto-grid{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:9px;
+}
+
+.auto-card{
+  border:2px solid #cadcc4;
+  border-radius:12px;
+  background:#f8fcf5;
+  padding:10px;
+}
+
+.auto-head{
+  display:flex;
+  justify-content:space-between;
+  gap:8px;
+  align-items:center;
+}
+
+.auto-name{
+  font-size:15px;
+  font-weight:900;
+}
+
+.auto-desc{
+  font-size:11px;
+  line-height:1.45;
+  color:#657064;
+  margin:5px 0 8px;
+}
+
+.switch{
+  display:flex;
+  align-items:center;
+  gap:7px;
+  font-size:12px;
+  font-weight:900;
+}
+
+.switch input{
+  width:17px;
+  height:17px;
+  margin:0;
+}
+
+.buy-btn{
+  width:100%;
+  border:0;
+  border-radius:8px;
+  background:#6b4de1;
+  color:#fff;
+  padding:8px;
+  font-weight:900;
+}
+
+.target-wrap{
+  display:grid;
+  grid-template-columns:1fr auto;
+  gap:7px;
+  align-items:center;
+  margin-top:7px;
+}
+
+.target-wrap input{
+  min-width:0;
+  border:2px solid #cbd8c7;
+  border-radius:8px;
+  padding:7px;
+}
+
+.target-unit{
+  font-size:12px;
+  font-weight:900;
+  color:#556055;
+}
+
+/* =========================
+   퓨즈 머신
+========================= */
+
+.fusion-machine-sub{
+  margin-top:3px;
+  font-size:11px;
+  color:#6d656f;
+  font-weight:800;
+}
+
+.fusion-crop-select{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  margin-top:10px;
+  padding:9px 10px;
+  border:2px solid #ddd0ea;
+  border-radius:11px;
+  background:#fff;
+  font-size:12px;
+  font-weight:900;
+}
+
+.fusion-crop-select span{
+  white-space:nowrap;
+}
+
+.fusion-crop-select select{
+  flex:1;
+  min-width:0;
+  border:2px solid #cdb9dc;
+  border-radius:8px;
+  padding:7px 8px;
+  font-weight:900;
+  background:#fff;
+}
+
+.fusion-stage-title{
+  margin-top:14px;
+  font-size:14px;
+  font-weight:900;
+}
+
+.fusion-stage-list{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  margin-top:8px;
+}
+
+.fusion-stage-card{
+  display:grid;
+  grid-template-columns:72px 1fr 130px;
+  align-items:center;
+  gap:10px;
+  padding:10px;
+  border:2px solid #ddd0ea;
+  border-radius:12px;
+  background:#fff;
+}
+
+.fusion-stage-card.ready{
+  border-color:#a66ad0;
+  background:#fcf8ff;
+}
+
+.fusion-stage-number{
+  min-height:48px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:10px;
+  background:#efe5ff;
+  color:#7545a5;
+  font-size:14px;
+  font-weight:900;
+  text-align:center;
+}
+
+.fusion-stage-name{
+  font-size:13px;
+}
+
+.fusion-stage-rule{
+  margin-top:4px;
+  color:#684f78;
+  font-size:11px;
+  font-weight:800;
+}
+
+.fusion-stage-count{
+  margin-top:4px;
+  color:#697069;
+  font-size:11px;
+  font-weight:800;
+}
+
+.fusion-stage-btn{
+  width:100%;
+  border:0;
+  border-radius:9px;
+  padding:9px 8px;
+  background:#65b75b;
+  color:#fff;
+  font-weight:900;
+}
+
+.fusion-stage-btn:disabled{
+  opacity:.5;
+}
+
+.fusion-stage-more{
+  margin-top:10px;
+  padding:8px 10px;
+  border-radius:10px;
+  background:#f5f0f8;
+  color:#6d6571;
+  font-size:11px;
+  font-weight:800;
+  text-align:center;
+}
+
+.fusion-box{
+  margin-top:10px;
+  padding:12px;
+  border:3px solid #caa7e8;
+  border-radius:14px;
+  background:#fbf7ff;
+}
+
+.fusion-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:8px;
+  flex-wrap:wrap;
+}
+
+.fusion-machine-title{
+  font-size:18px;
+  font-weight:900;
+}
+
+.fusion-status{
+  margin-top:8px;
+  padding:9px;
+  border-radius:10px;
+  background:#fff;
+  border:2px solid #e3d7f0;
+  font-size:12px;
+  font-weight:800;
+}
+
+.fusion-equip-btn,
+.fusion-action-btn{
+  border:0;
+  border-radius:9px;
+  padding:8px 11px;
+  font-weight:900;
+}
+
+.fusion-equip-btn{
+  background:#7950b5;
+  color:#fff;
+}
+
+.fusion-action-btn{
+  background:#65b75b;
+  color:#fff;
+  width:100%;
+  margin-top:7px;
+}
+
+.fusion-action-btn:disabled,
+.fusion-equip-btn:disabled{
+  opacity:.5;
+}
+
+.fusion-progress{
+  height:10px;
+  margin-top:8px;
+  overflow:hidden;
+  border-radius:999px;
+  background:#e7e1ec;
+}
+
+.fusion-progress>div{
+  height:100%;
+  border-radius:999px;
+  background:#9a68c7;
+}
+
+.fusion-auto{
+  display:flex;
+  align-items:center;
+  gap:7px;
+  margin-top:9px;
+  font-size:12px;
+  font-weight:900;
+}
+
+.fusion-items-title{
+  margin-top:12px;
+  font-size:13px;
+  font-weight:900;
+}
+
+.fusion-items-grid{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:8px;
+  margin-top:8px;
+}
+
+.fusion-item-card{
+  border:2px solid #ddd0ea;
+  border-radius:12px;
+  background:#fff;
+  cursor:pointer;
+  padding:9px;
+  text-align:center;
+  cursor:pointer;
+}
+
+.fusion-item-card:hover{
+  border-color:#9a68c7;
+}
+
+.fusion-item-icon{
+  font-size:30px;
+  line-height:1.1;
+}
+
+.fusion-item-name{
+  margin-top:4px;
+  font-size:13px;
+  font-weight:900;
+}
+
+.fusion-item-mult{
+  margin-top:3px;
+  color:#7950b5;
+  font-size:15px;
+  font-weight:900;
+}
+
+.fusion-item-count{
+  margin-top:3px;
+  font-size:11px;
+  color:#697069;
+}
+
+.fusion-enchant-badge{
+  display:inline-block;
+  margin-top:3px;
+  padding:3px 7px;
+  border-radius:999px;
+  background:#efe5ff;
+  color:#7a4bb0;
+  font-size:11px;
+  font-weight:900;
+}
+
+.fusion-detail{
+  margin-top:10px;
+  padding:10px;
+  border:2px dashed #cbb3de;
+  border-radius:12px;
+  background:#fff;
+  font-size:12px;
+}
+
+.fusion-ready{
+  margin-top:9px;
+  padding:10px;
+  border:3px solid #f0c84b;
+  border-radius:12px;
+  background:#fff9dd;
+  text-align:center;
+}
+
+@media(max-width:600px){
+  .fusion-items-grid{
+    grid-template-columns:1fr;
+  }
+}
+
+/* =========================
+   게임 설명서
+========================= */
+
+.game-guide{
+  background:#f8fcf5;
+  border:2px solid #c7dabb;
+  border-radius:12px;
+  padding:11px;
+}
+
+.game-guide-title{
+  font-size:16px;
+  font-weight:900;
+  margin-bottom:6px;
+}
+
+.game-guide-text{
+  font-size:11px;
+  line-height:1.65;
+  color:#5d665d;
+}
+
+.game-guide-text strong{
+  color:#354235;
+}
+
+/* =========================
+   토스트
+========================= */
+
+.toast{
+  position:fixed;
+  left:50%;
+  bottom:18px;
+  transform:translate(-50%,15px);
+  opacity:0;
+  pointer-events:none;
+  background:rgba(0,0,0,.86);
+  color:#fff;
+  border-radius:999px;
+  padding:10px 15px;
+  font-size:13px;
+  font-weight:900;
+  transition:.18s;
+  z-index:1000;
+}
+
+.toast.show{
+  opacity:1;
+  transform:translate(-50%,0);
+}
+
+.reset-btn{
+  border:0;
+  border-radius:8px;
+  background:#e15f5f;
+  color:#fff;
+  padding:8px 10px;
+  font-weight:900;
+}
+
+/* =========================
+   숲농장 자동 기능
+========================= */
+
+.forest-auto-panel{
+  margin-top:12px;
+  padding:12px;
+  border:2px solid #c7dabb;
+  border-radius:12px;
+  background:#f8fcf5;
+}
+
+.forest-auto-title{
+  font-size:15px;
+  font-weight:900;
+  margin-bottom:9px;
+}
+
+.forest-auto-grid{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:8px;
+}
+
+.forest-auto-card{
+  display:block;
+  border:2px solid #d4e0d0;
+  border-radius:10px;
+  padding:9px;
+  background:#fff;
+}
+
+.forest-auto-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:8px;
+  font-weight:900;
+}
+
+.forest-auto-head input{
+  width:17px;
+  height:17px;
+}
+
+.forest-auto-desc{
+  margin-top:5px;
+  font-size:11px;
+  line-height:1.45;
+  color:#657064;
+}
+
+/* =========================
+   반응형
+========================= */
+
+@media(max-width:900px){
+
+  .layout{
+    grid-template-columns:1fr;
+  }
+
+  .stats{
+    grid-template-columns:repeat(2,1fr);
+  }
+
+}
+
+@media(max-width:600px){
+
+  .seed-grid,
+  .plot-row,
+  .harvest-grid,
+  .auto-grid,
+  .crop-info-grid,
+  .world-list{
+    grid-template-columns:1fr;
+  }
+
+  .graph-stats{
+    grid-template-columns:repeat(2,1fr);
+  }
+
+}
+
+
+/* =========================
+   작물 도감
+========================= */
+.crop-book{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:10px;
+  margin-top:12px;
+}
+
+.crop-book-card{
+  position:relative;
+  padding:12px;
+  border:2px solid #d8e2d6;
+  border-radius:14px;
+  background:#f9fcf8;
+  text-align:center;
+  box-sizing:border-box;
+}
+
+.crop-book-card.locked{
+  background:#f0f2f0;
+  border-color:#d7d7d7;
+}
+
+.crop-book-icon{
+  font-size:34px;
+  line-height:1.2;
+  margin-bottom:5px;
+}
+
+.crop-book-name{
+  font-size:14px;
+  font-weight:900;
+}
+
+.crop-book-rarity{
+  margin-top:4px;
+  font-size:11px;
+  font-weight:800;
+  color:#687267;
+}
+
+.crop-book-detail{
+  margin-top:7px;
+  font-size:10px;
+  line-height:1.5;
+  color:#687267;
+}
+
+.crop-book-locked{
+  font-size:28px;
+  margin:4px 0 8px;
+}
+
+.crop-book-progress{
+  margin-top:10px;
+  padding:9px 11px;
+  border-radius:11px;
+  background:#eef7eb;
+  font-size:12px;
+  font-weight:900;
+  text-align:center;
+}
+
+
+/* =========================
+   농장 레벨 목표
+========================= */
+.farm-level-box{
+  margin-top:10px;
+  padding:12px;
+  border:3px solid #8acb78;
+  border-radius:14px;
+  background:#f8fff5;
+}
+.farm-level-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:8px;
+  font-weight:900;
+}
+.farm-level-bar{
+  height:12px;
+  margin-top:9px;
+  overflow:hidden;
+  border-radius:99px;
+  background:#e5e5e5;
+}
+.farm-level-bar>div{
+  height:100%;
+  border-radius:99px;
+  background:#65b75b;
+}
+.farm-level-note{
+  margin-top:7px;
+  font-size:12px;
+  font-weight:800;
+}
+
+/* =========================
+   오른쪽 아래 돈 카운터
+========================= */
+.money-corner{
+  position:fixed;
+  right:18px;
+  bottom:18px;
+  z-index:9999;
+  display:flex;
+  align-items:center;
+  gap:7px;
+  padding:9px 13px;
+  background:#fff;
+  border:3px solid #65b75b;
+  border-radius:14px;
+  box-shadow:0 3px 10px rgba(0,0,0,.18);
+  font-size:19px;
+  font-weight:900;
+  pointer-events:none;
+}
+
+.money-corner-value{
+  min-width:55px;
+  text-align:right;
+}
+
+@media(max-width:650px){
+  .money-corner{
+    right:10px;
+    bottom:10px;
+    padding:7px 10px;
+    font-size:16px;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<!-- 오른쪽 아래 돈 카운터 -->
+<div class="money-corner">
+  <span>🪙</span>
+  <span id="moneyCorner" class="money-corner-value">500</span>
+</div>
+
+
+<div id="app">
+
+  <!-- =========================
+       월드
+  ========================== -->
+
+  <section class="panel">
+
+    <h2 class="title">
+      🌎 월드
+    </h2>
+
+    <div class="current-world">
+
+      현재 플레이 중인 월드:
+      <span id="currentWorldName">
+        나의 첫 월드
+      </span>
+
+    </div>
+
+    <div
+      id="worldList"
+      class="world-list"
+    ></div>
+
+    <button
+      class="world-new"
+      onclick="createWorld()"
+    >
+      ＋ 새 월드 만들기
+    </button>
+
+    <div
+      class="small-note"
+      style="margin-top:9px"
+    >
+
+      월드마다 돈, 씨앗, 농장 페이지,
+      자동 기능, 시장 가격이 모두 따로 저장돼.
+
+    </div>
+
+    <button
+      class="forest-link"
+      onclick="setFarmArea('forest')"
+    >
+      🌲 숲농장으로 이동 · 나무를 키워서 목재를 팔아 부업하기
+    </button>
+
+  </section>
+
+
+  <!-- =========================
+       상단
+  ========================== -->
+
+  <div class="stats">
+
+    <div class="stat">
+
+      <div class="stat-label">
+        🪙 보유 금액
+      </div>
+
+      <div class="stat-value">
+        <span id="money">500</span>
+      </div>
+
+    </div>
+
+
+    <div class="stat">
+
+      <div class="stat-label">
+        📦 보유 씨앗
+      </div>
+
+      <div class="stat-value">
+        <span id="seedTotal">3</span>
+      </div>
+
+    </div>
+
+
+    <div class="stat">
+
+      <div class="stat-label">
+        🧑‍🌾 농장 칸
+      </div>
+
+      <div class="stat-value">
+        <span id="plotTotal">2</span>
+      </div>
+
+    </div>
+
+
+    <div class="stat">
+
+      <div class="stat-label">
+        📈 시장 변동
+      </div>
+
+      <div class="stat-value">
+        <span id="marketTimer">3</span>초
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <!-- =========================
+       농장 레벨 목표
+  ========================== -->
+
+  <section class="panel">
+
+    <h2 class="title">
+      🏆 농장 레벨
+    </h2>
+
+    <div class="farm-level-box">
+
+      <div class="farm-level-head">
+        <span id="farmLevelText">🌱 농장 레벨 1</span>
+        <span id="farmLevelXP">0 / 20 XP</span>
+      </div>
+
+      <div class="farm-level-bar">
+        <div id="farmLevelBar" style="width:0%"></div>
+      </div>
+
+      <div class="farm-level-note" id="farmLevelGoal">
+        🎯 다음 목표: 20 XP 모으기
+      </div>
+
+    </div>
+
+  </section>
+
+
+
+
+  <!-- =========================
+       농장 구역 선택
+  ========================== -->
+
+  <section class="panel" id="farmAreaSwitcher">
+
+    <h2 class="title">🌱 농장 구역</h2>
+
+    <div class="small-note" id="farmAreaNote">
+      밀·토마토·옥수수·당근처럼 먹을 수 있는 작물을 키우는 농장이야.
+    </div>
+
+    <div class="forest-row" style="margin-top:10px;flex-wrap:wrap">
+      <button class="forest-btn active" data-farm-area="food" onclick="setFarmArea('food')">🍚 식용 농장</button>
+      <button class="forest-btn" data-farm-area="fruit" onclick="setFarmArea('fruit')">🍎 과일 농장</button>
+      <button class="forest-btn" data-farm-area="forest" onclick="setFarmArea('forest')">🌲 숲농장</button>
+    </div>
+
+    <div class="farm-level-note" style="margin-top:10px">
+      현재 구역: <b id="farmAreaTitle">🍚 식용 농장</b>
+    </div>
+
+  </section>
+
+
+  <!-- =========================
+       숲농장 / 부업
+  ========================== -->
+
+  <section class="panel" id="forestFarmPanel">
+
+    <div class="market-head">
+      <h2 class="title" style="margin:0">🌲 숲농장 · 나무 부업</h2>
+      <button class="refresh" onclick="setFarmArea('food')">🍚 식용 농장으로</button>
+    </div>
+
+    <div class="small-note">
+      여기서는 열매를 파는 대신 <b>나무를 목재로 만들어 판매</b>해.
+      참나무·소나무·사과나무를 따로 키울 수 있고, 나무마다 자라는 시간이 달라.
+      나무가 자라면 🌲 <b>벌목하기</b>로 목재를 얻고 바로 팔아서 돈을 벌 수 있어.
+    </div>
+
+    <div class="forest-summary">
+      <div class="forest-summary-main">
+        <span>🌲 보유 묘목 <b id="forestSaplingTotal">0</b>개</span>
+        <span>🪵 보유 목재 <b id="forestWoodTotal">0</b>개</span>
+        <span>🌳 숲 칸 <b id="forestSlotTotal">0</b>개</span>
+      </div>
+
+      <button
+        class="forest-expand"
+        id="forestExpandBtn"
+        onclick="addForestSlot()"
+      >
+        + 숲 칸 늘리기
+      </button>
+    </div>
+
+    <div class="forest-grid" id="forestTreeShop"></div>
+
+    <div class="forest-slots" id="forestSlots"></div>
+
+    <div class="forest-auto-panel">
+      <div class="forest-auto-title">⚙️ 숲농장 자동 기능</div>
+      <div class="forest-auto-grid">
+
+        <label class="forest-auto-card">
+          <div class="forest-auto-head">
+            <span>🌱 자동 심기</span>
+            <input
+              type="checkbox"
+              id="forestAutoPlant"
+              onchange="toggleForestAuto('plant',this.checked)"
+            >
+          </div>
+          <div class="forest-auto-desc">빈 숲 칸에 선택한 나무를 자동으로 심어.</div>
+        </label>
+
+        <label class="forest-auto-card">
+          <div class="forest-auto-head">
+            <span>🛒 자동 묘목 사기</span>
+            <input
+              type="checkbox"
+              id="forestAutoBuySaplings"
+              onchange="toggleForestAuto('buySaplings',this.checked)"
+            >
+          </div>
+          <div class="forest-auto-desc">필요한 묘목이 없으면 선택한 나무 묘목을 자동으로 사.</div>
+        </label>
+
+        <label class="forest-auto-card">
+          <div class="forest-auto-head">
+            <span>🪵 자동 수확</span>
+            <input
+              type="checkbox"
+              id="forestAutoHarvest"
+              onchange="toggleForestAuto('harvest',this.checked)"
+            >
+          </div>
+          <div class="forest-auto-desc">자란 나무를 자동으로 벌목해서 목재를 얻어.</div>
+        </label>
+
+        <label class="forest-auto-card">
+          <div class="forest-auto-head">
+            <span>💰 자동 판매</span>
+            <input
+              type="checkbox"
+              id="forestAutoSell"
+              onchange="toggleForestAuto('sell',this.checked)"
+            >
+          </div>
+          <div class="forest-auto-desc">보유 목재를 자동으로 전부 팔아 돈으로 바꿔.</div>
+        </label>
+
+        <label class="forest-auto-card">
+          <div class="forest-auto-head">
+            <span>🟫 자동 숲 칸 사기</span>
+            <input
+              type="checkbox"
+              id="forestAutoBuySlots"
+              onchange="toggleForestAuto('buySlots',this.checked)"
+            >
+          </div>
+          <div class="forest-auto-desc">숲 칸이 모두 차면 다음 칸을 자동으로 구입해.</div>
+        </label>
+
+        <div class="forest-auto-card">
+          <div class="forest-auto-head">
+            <span>🌳 자동으로 심을 나무</span>
+          </div>
+          <select
+            id="forestAutoTree"
+            onchange="setForestAutoTree(this.value)"
+            style="width:100%;margin-top:7px;border:2px solid #cbd8c7;border-radius:8px;padding:8px"
+          >
+            <option value="oak">🌳 참나무</option>
+            <option value="pine">🌲 소나무</option>
+            <option value="apple">🍎 사과나무</option>
+          </select>
+        </div>
+
+      </div>
+    </div>
+
+  </section>
+
+
+  <!-- =========================
+       식용 / 과일 농장
+  ========================== -->
+
+  <section class="panel" style="margin-top:14px">
+    <div class="market-head">
+      <h2 class="title" style="margin:0"><span id="farmAreaTitleInline">🍚 식용 농장</span></h2>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <button class="refresh" onclick="setFarmArea('food')">🍚 식용</button>
+        <button class="refresh" onclick="setFarmArea('fruit')">🍎 과일</button>
+      </div>
+    </div>
+  </section>
+
+  <div class="layout" id="cropFarmArea">
+
+    <!-- =====================
+         왼쪽
+    ====================== -->
+
+    <main>
+
+      <!-- 랜덤박스 -->
+
+      <section class="panel">
+
+        <h2 class="title">
+          🎁 랜덤 박스
+        </h2>
+
+        <div class="gacha" id="gachaBox"></div>
+
+      </section>
+
+
+      <!-- 씨앗 -->
+
+      <section class="panel">
+
+        <h2 class="title">
+          🌱 내 씨앗
+        </h2>
+
+        <div
+          class="seed-grid"
+          id="seedGrid"
+        ></div>
+
+      </section>
+
+
+      <!-- 농장 -->
+
+      <section class="panel">
+
+        <h2 class="title">
+          🚜 내 농장
+        </h2>
+
+        <div
+          class="farm-tabs"
+          id="farmTabs"
+        ></div>
+
+        <div
+          class="page-price-note"
+          id="pagePriceNote"
+        ></div>
+
+        <div
+          class="farm-info"
+          id="farmInfo"
+        ></div>
+
+        <div
+          class="plot-row"
+          id="plots"
+        ></div>
+
+        <div class="land-row">
+
+          <div>
+
+            <div class="land-price">
+
+              다음 농장 칸:
+              <span id="nextPlotPrice">
+                200
+              </span>원
+
+            </div>
+
+            <div
+              style="
+                font-size:11px;
+                color:#687267;
+                margin-top:2px
+              "
+            >
+              현재 페이지의 농장 칸 가격이야.
+            </div>
+
+          </div>
+
+          <button
+            class="land-buy"
+            onclick="addPlot()"
+          >
+            + 농장 칸 추가
+          </button>
+
+        </div>
+
+      </section>
+
+
+      <!-- 작물 도감 -->
+
+      <section class="panel">
+
+        <h2 class="title">
+          📚 작물 도감
+        </h2>
+
+        <div
+          class="crop-book-progress"
+          id="cropBookProgress"
+        >
+          📚 도감 0 / 0종 발견
+        </div>
+
+        <div
+          class="crop-book"
+          id="cropBook"
+        ></div>
+
+        <div class="small-note" style="margin-top:9px">
+          작물을 처음 수확하면 도감에 등록돼.
+        </div>
+
+      </section>
+
+
+      <!-- 퓨즈 머신 -->
+
+      <section class="panel">
+
+        <h2 class="title">
+          🧪 퓨즈 머신
+        </h2>
+
+        <div class="small-note">
+          같은 단계의 <b>씨앗 4개</b>를 합치면 10초 뒤 <b>다음 인챈트 씨앗 1개</b>가 나와.
+          4개가 또 모이면 다음 단계로 계속 올라갈 수 있어.
+          퓨즈 머신은 반드시 장착해야 사용할 수 있어.
+        </div>
+
+        <div
+          class="fusion-box"
+          id="fusionPanel"
+        ></div>
+
+      </section>
+
+
+      <!-- 작물 설명 -->
+
+      <section class="panel">
+
+        <h2 class="title">
+          📖 작물 설명
+        </h2>
+
+        <div class="small-note">
+
+          성장 시간, 반복 수확 여부,
+          수확량, 기본 가격과 최고 가격을 확인할 수 있어.
+
+        </div>
+
+        <div
+          class="crop-info-grid"
+          id="cropInfo"
+        ></div>
+
+      </section>
+
+    </main>
+
+
+    <!-- =====================
+         오른쪽
+    ====================== -->
+
+    <aside>
+
+      <!-- 시장 -->
+
+      <section class="panel">
+
+        <div class="market-head">
+
+          <h2
+            class="title"
+            style="margin:0"
+          >
+            🏪 시장
+          </h2>
+
+          <button
+            class="refresh"
+            onclick="forceMarket()"
+          >
+            가격 갱신
+          </button>
+
+        </div>
+
+        <div class="small-note">
+
+          파란 선 = 실제 가격<br>
+          주황색 선 = 평균 가격<br>
+          <b>3초마다 가격이 바뀌어.</b>
+
+        </div>
+
+        <div
+          class="crop-tabs"
+          id="cropTabs"
+        ></div>
+
+        <div class="graph-box">
+
+          <canvas
+            id="chart"
+            width="460"
+            height="210"
+          ></canvas>
+
+          <div class="graph-legend">
+
+            <span class="dot-blue">
+              ━ 실제 가격
+            </span>
+
+            &nbsp;
+
+            <span class="dot-orange">
+              ┈ 평균 가격
+            </span>
+
+          </div>
+
+          <div
+            class="graph-stats"
+            id="graphStats"
+          ></div>
+
+        </div>
+
+      </section>
+
+
+      <!-- 가격 -->
+
+      <section class="panel">
+
+        <h2 class="title">
+          🪙 현재 가격
+        </h2>
+
+        <div
+          class="price-list"
+          id="prices"
+        ></div>
+
+      </section>
+
+
+      <!-- 자동 -->
+
+      <section class="panel">
+
+        <h2 class="title">
+          ⚙️ 자동 기능
+        </h2>
+
+        <div
+          class="small-note"
+          style="margin-bottom:9px"
+        >
+
+          자동 심기 / 자동 땅 구입 /
+          자동 씨앗 구입 / 자동 수확 /
+          자동 판매를 사용할 수 있어.
+
+        </div>
+
+        <div
+          class="auto-grid"
+          id="autoPanel"
+        ></div>
+
+      </section>
+
+
+      <!-- 수확물 -->
+
+      <section class="panel">
+
+        <h2 class="title">
+          🧺 수확한 작물
+        </h2>
+
+        <div
+          class="harvest-grid"
+          id="harvest"
+        ></div>
+
+      </section>
+
+
+      <section class="panel">
+
+        <button
+          class="reset-btn"
+          onclick="resetCurrentWorld()"
+        >
+          🔄 현재 월드 새로 시작
+        </button>
+
+      </section>
+
+    </aside>
+
+  </div>
+
+
+  <!-- =========================
+       게임 설명
+  ========================== -->
+
+  <section class="panel">
+
+    <h2 class="title">
+      📘 이 게임에 대해
+    </h2>
+
+    <div class="game-guide">
+
+      <div class="game-guide-title">
+        🌱 잠수 농장 게임 설명서
+      </div>
+
+      <div class="game-guide-text">
+
+        <strong>🎁 랜덤 박스</strong><br>
+        30원을 사용해서 랜덤 씨앗을 얻을 수 있어.<br><br>
+
+        <strong>📄 농장 페이지</strong><br>
+        한 월드 안에서 여러 개의 농장 페이지를 만들 수 있어.
+        페이지마다 농장 칸과 자동 심기 설정을 따로 관리해.<br><br>
+
+        <strong>🌱 농장</strong><br>
+        씨앗을 심고 작물이 자라면 수확해서 돈을 벌 수 있어.<br><br>
+
+        <strong>🏆 농장 레벨</strong><br>
+        작물을 수확해서 경험치를 모으면 농장 레벨이 올라가고,
+        레벨이 오를 때마다 새로운 작물이 하나씩 해금돼.<br><br>
+
+        <strong>🌳 반복 수확</strong><br>
+        사과나무, 소나무, 포도, 황금사과나무는
+        한 번 심으면 수확한 뒤 다시 자라.<br><br>
+
+        <strong>🍅 토마토</strong><br>
+        토마토는 일정 시간 동안 여러 번 수확할 수 있어.<br><br>
+
+        <strong>🏪 시장</strong><br>
+        시장 가격은 3초마다 변동해.
+        높은 가격에 판매해서 돈을 모아보자.<br><br>
+
+        <strong>⚙️ 자동 기능</strong><br>
+        자동 심기, 자동 땅 구입, 자동 씨앗 구입,
+        자동 수확, 자동 판매를 사용할 수 있어.<br><br>
+
+        <strong>🌎 월드</strong><br>
+        새 월드를 만들면 별도의 저장 공간이 만들어져.
+        월드마다 돈과 농장, 페이지 등이 따로 저장돼.<br><br>
+
+        <strong>📄 페이지 이름</strong><br>
+        농장 페이지 이름을 더블 클릭하면
+        원하는 이름으로 바꿀 수 있어.<br><br>
+
+        <strong>🧪 퓨즈 머신</strong><br>
+        같은 단계 씨앗 4개를 넣으면 10초 뒤 다음 인챈트 단계 씨앗 1개가 나와.
+        인챈트 단계가 높아질수록 수확량 배수도 올라가.
+        퓨즈 머신 하나에서 단계가 아래로 계속 이어지고, 자동 연속 퓨즈를 켜면 알아서 합성해.<br><br>
+
+        <strong>💰 목표</strong><br>
+        작물을 키우고 판매해서 농장을 계속 키워보자!
+
+      </div>
+
+    </div>
+
+  </section>
+
+</div>
+
+
+<div
+  class="toast"
+  id="toast"
+></div>
+
+
+<script>
+
+"use strict";
+
+
+/* =========================================================
+   작물
+========================================================= */
+
+const CROPS={
+
+  apple:{
+    name:"사과나무",
+    fruit:"사과",
+    icon:"🍎",
+    seedIcon:"🌳",
+    rarity:"일반",
+    cls:"normal",
+    weight:38,
+    grow:15,
+    regrow:10,
+    repeatType:"permanent",
+    yieldMin:2,
+    yieldMax:4,
+    base:8,
+    maxPrice:13.5
+  },
+
+  pine:{
+    name:"소나무",
+    fruit:"솔방울",
+    icon:"🌲",
+    seedIcon:"🌲",
+    rarity:"고급",
+    cls:"high",
+    weight:5,
+    grow:20,
+    regrow:14,
+    repeatType:"permanent",
+    yieldMin:1,
+    yieldMax:3,
+    base:10,
+    maxPrice:17
+  },
+
+  wheat:{
+    name:"밀",
+    fruit:"밀",
+    icon:"🌾",
+    seedIcon:"🌱",
+    rarity:"일반",
+    cls:"normal",
+    weight:30,
+    grow:8,
+    regrow:0,
+    repeatType:"single",
+    yieldMin:10,
+    yieldMax:16,
+    base:1.5,
+    maxPrice:3
+  },
+
+  tomato:{
+    name:"토마토",
+    fruit:"토마토",
+    icon:"🍅",
+    seedIcon:"🌱",
+    rarity:"고급",
+    cls:"high",
+    weight:15,
+    grow:12,
+    regrow:15,
+    repeatType:"timed",
+    lifetime:10*60*1000,
+    yieldMin:3,
+    yieldMax:5,
+    base:5,
+    maxPrice:8.5
+  },
+
+  corn:{
+    name:"옥수수",
+    fruit:"옥수수",
+    icon:"🌽",
+    seedIcon:"🌱",
+    rarity:"고급",
+    cls:"high",
+    weight:8,
+    grow:18,
+    regrow:0,
+    repeatType:"single",
+    yieldMin:9,
+    yieldMax:14,
+    base:3,
+    maxPrice:5
+  },
+
+  grape:{
+    name:"포도",
+    fruit:"포도",
+    icon:"🍇",
+    seedIcon:"🌿",
+    rarity:"희귀",
+    cls:"rare",
+    weight:4,
+    grow:28,
+    regrow:16,
+    repeatType:"permanent",
+    yieldMin:2,
+    yieldMax:4,
+    base:14,
+    maxPrice:24
+  },
+
+  golden:{
+    name:"황금사과나무",
+    fruit:"황금사과",
+    icon:"🌟",
+    seedIcon:"🌳",
+    rarity:"전설",
+    cls:"legend",
+    weight:.5,
+    grow:45,
+    regrow:25,
+    repeatType:"permanent",
+    yieldMin:1,
+    yieldMax:2,
+    base:40,
+    maxPrice:68
+  }
+
+};
+
+
+/* =========================================================
+   레벨 해금 작물
+   기존 작물은 그대로 두고, 농장 레벨이 오를 때 하나씩 추가
+========================================================= */
+
+const LOCKED_CROPS={
+
+  carrot:{
+    unlockLevel:2,
+    crop:{
+      name:"당근",
+      fruit:"당근",
+      icon:"🥕",
+      seedIcon:"🌱",
+      rarity:"일반",
+      cls:"normal",
+      weight:18,
+      grow:10,
+      regrow:0,
+      repeatType:"single",
+      yieldMin:7,
+      yieldMax:11,
+      base:2.5,
+      maxPrice:4.5
+    }
+  }
+
+};
+
+
+const IDS=
+  Object.keys(CROPS);
+
+
+/* =========================================================
+   농장 구역 분리
+========================================================= */
+
+const FARM_AREA_CONFIG={
+
+  food:{
+    title:"🍚 식용 농장",
+    note:"밀·토마토·옥수수·당근처럼 먹을 수 있는 작물을 키우는 농장이야.",
+    ids:["wheat","tomato","corn","carrot"],
+    defaultSeed:"wheat"
+  },
+
+  fruit:{
+    title:"🍎 과일 농장",
+    note:"사과·포도·황금사과나무와 같은 과일 작물을 키우는 별도 농장이야.",
+    ids:["apple","grape","golden","pine"],
+    defaultSeed:"apple"
+  }
+};
+
+let currentFarmArea="food";
+let currentFarmView="crop";
+
+function getCurrentFarmCropIds(){
+  const config=FARM_AREA_CONFIG[currentFarmArea]||FARM_AREA_CONFIG.food;
+  return config.ids.filter(id=>CROPS[id]);
+}
+
+function getCurrentFarmPages(){
+  if(!game) return [];
+  if(currentFarmArea==="fruit") return Array.isArray(game.fruitPages)?game.fruitPages:[];
+  return Array.isArray(game.pages)?game.pages:[];
+}
+
+function getCurrentFarmAreaTitle(){
+  return (FARM_AREA_CONFIG[currentFarmArea]||FARM_AREA_CONFIG.food).title;
+}
+
+
+/* =========================================================
+   월드
+========================================================= */
+
+const WORLD_INDEX_KEY=
+  "잠수농장_월드목록_페이지추가_v2";
+
+const WORLD_PREFIX=
+  "잠수농장_월드_페이지추가_";
+
+
+const OLD_WORLD_INDEX_KEY=
+  "잠수농장_월드목록_v1";
+
+const OLD_WORLD_PREFIX=
+  "잠수농장_월드_";
+
+
+const LEGACY_KEYS=[
+
+  "잠수농장_최종_3초시장_v6",
+
+  "잠수농장_자동기능_반복수확_페이지이름_작물설명_v5",
+
+  "잠수농장_자동기능_반복수확_페이지이름_v4",
+
+  "잠수농장_자동기능_반복수확_v3"
+
+];
+
+
+const MARKET_INTERVAL=
+  3000;
+
+const BOX_COST=
+  30;
+
+const AUTO_HARVEST_COST=
+  300;
+
+const AUTO_SELL_COST=
+  500;
+
+const UPROOT_COST=
+  1000;
+
+
+/* =========================================================
+   랜덤 씨앗 박스 단계
+========================================================= */
+
+const SEED_BOX_TYPES=[
+
+  {
+    name:"기본 씨앗 박스",
+    icon:"🎁",
+    cost:30,
+    upgradeCost:0,
+    rarityChance:null,
+    note:"현재 사용하던 기존 확률"
+  },
+
+  {
+    name:"고급 씨앗 박스",
+    icon:"📦",
+    cost:80,
+    upgradeCost:300,
+    rarityChance:{normal:55,high:30,rare:12,legend:3},
+    note:"고급·희귀 씨앗 확률 증가"
+  },
+
+  {
+    name:"희귀 씨앗 박스",
+    icon:"💎",
+    cost:180,
+    upgradeCost:1000,
+    rarityChance:{normal:30,high:35,rare:25,legend:10},
+    note:"희귀 씨앗이 훨씬 잘 나옴"
+  },
+
+  {
+    name:"전설 씨앗 박스",
+    icon:"👑",
+    cost:500,
+    upgradeCost:3500,
+    rarityChance:{normal:10,high:25,rare:40,legend:25},
+    note:"전설 씨앗 확률 대폭 증가"
+  }
+
+];
+
+
+/* 페이지 추가 */
+const FIRST_PAGE_COST=
+  100;
+
+const PAGE_PRICE_RATE=
+  1.5;
+
+
+let worldIndex;
+
+let activeWorldId;
+
+let game;
+
+let selected=
+  "apple";
+
+let activePageIndex=
+  0;
+
+let lastMarketUpdate=
+  Date.now();
+
+/* 자동 씨앗 뽑기 마지막 실행 시각 */
+let lastAutoBoxRun=
+  0;
+
+const AUTO_BOX_INTERVAL=
+  700;
+
+
+/* =========================================================
+   기본 페이지
+========================================================= */
+
+function createDefaultPage(
+  name="1페이지"
+){
+
+  return{
+
+    name:name,
+
+    plots:[
+      null,
+      null
+    ],
+
+    autoPlant:false,
+
+    autoBuyPlots:false,
+
+    selectedSeedId:"apple"
+
+  };
+
+}
+
+
+/* =========================================================
+   기본 게임
+========================================================= */
+
+function createDefaultGame(){
+
+  const g={
+
+    money:500,
+
+    seeds:{},
+
+    harvest:{},
+
+    /* 작물 도감: 처음 수확한 작물을 기록 */
+    collection:{},
+
+    /* 농장 레벨 경험치 */
+    farmXP:0,
+
+    /* 랜덤 씨앗 박스 */
+    boxTier:0,
+    boxUnlocked:[true,false,false,false],
+    boxLastResult:null,
+
+    /* 퓨즈 머신 */
+    fusion:{
+      machineOwned:true,
+      equipped:false,
+      autoPull:false,
+      input:null,
+      ready:null,
+      items:{}
+    },
+
+    /* 숲농장 / 나무 부업 */
+    forestFarm:{
+      saplings:{oak:1,pine:1,apple:1},
+      wood:{oak:0,pine:0,apple:0},
+      slots:[null,null,null],
+      auto:{
+        buySaplings:false,
+        plant:false,
+        harvest:false,
+        sell:false,
+        buySlots:false,
+        selectedTree:"oak"
+      }
+    },
+
+    prices:{},
+
+    history:{},
+
+    pages:[
+      createDefaultPage("1페이지")
+    ],
+
+    fruitPages:[
+      createDefaultPage("1페이지")
+    ],
+
+    activePageIndexes:{
+      food:0,
+      fruit:0
+    },
+
+    lastFarmArea:"food",
+
+    activePageIndex:0,
+
+    auto:{
+
+      buyBox:false,
+
+      buyBoxReserve:300,
+
+      harvestOwned:false,
+
+      harvest:false,
+
+      sellOwned:false,
+
+      sell:false,
+
+      targets:{}
+
+    }
+
+  };
+
+
+  IDS.forEach(
+    id=>{
+
+      g.seeds[id]=0;
+
+      g.harvest[id]=0;
+
+      g.collection[id]=false;
+
+      g.prices[id]=
+        CROPS[id].base;
+
+      g.history[id]=[
+        CROPS[id].base
+      ];
+
+      g.auto.targets[id]=
+        CROPS[id].base;
+
+    }
+  );
+
+
+  g.seeds.apple=
+    3;
+
+
+  return g;
+
+}
+
+
+/* =========================================================
+   월드 키
+========================================================= */
+
+function worldKey(id){
+
+  return WORLD_PREFIX+
+    id;
+
+}
+
+
+/* =========================================================
+   이전 데이터 찾기
+========================================================= */
+
+function findLegacySave(){
+
+  for(
+    const key of LEGACY_KEYS
+  ){
+
+    const data=
+      localStorage.getItem(key);
+
+
+    if(data){
+
+      try{
+
+        return JSON.parse(data);
+
+      }catch(e){
+
+      }
+
+    }
+
+  }
+
+
+  return null;
+
+}
+
+
+/* =========================================================
+   예전 월드 시스템 데이터 가져오기
+========================================================= */
+
+function migrateOldWorldSystem(){
+
+  try{
+
+    const raw=
+      localStorage.getItem(
+        OLD_WORLD_INDEX_KEY
+      );
+
+
+    if(!raw){
+
+      return null;
+
+    }
+
+
+    const oldIndex=
+      JSON.parse(raw);
+
+
+    if(
+      !oldIndex||
+      !Array.isArray(oldIndex.worlds)||
+      !oldIndex.worlds.length
+    ){
+
+      return null;
+
+    }
+
+
+    const newIndex={
+
+      activeId:
+        oldIndex.activeId,
+
+      worlds:
+        oldIndex.worlds.map(
+          w=>({
+            id:w.id,
+            name:w.name
+          })
+        )
+
+    };
+
+
+    oldIndex.worlds.forEach(
+      w=>{
+
+        const oldRaw=
+          localStorage.getItem(
+            OLD_WORLD_PREFIX+
+            w.id
+          );
+
+
+        if(oldRaw){
+
+          try{
+
+            const oldGame=
+              JSON.parse(
+                oldRaw
+              );
+
+
+            localStorage.setItem(
+              WORLD_PREFIX+
+              w.id,
+              JSON.stringify(
+                migrateGameData(
+                  oldGame
+                )
+              )
+            );
+
+          }catch(e){
+
+          }
+
+        }
+
+      }
+    );
+
+
+    saveWorldIndexData(
+      newIndex
+    );
+
+
+    return newIndex;
+
+  }catch(e){
+
+    return null;
+
+  }
+
+}
+
+
+/* =========================================================
+   게임 데이터 마이그레이션
+========================================================= */
+
+function migrateGameData(
+  saved
+){
+
+  const g=
+    createDefaultGame();
+
+
+  if(!saved){
+
+    return g;
+
+  }
+
+
+  g.money=
+    Number(
+      saved.money
+    )||
+    500;
+
+  g.farmXP=
+    Math.max(0,Number(saved.farmXP)||0);
+
+  /* 랜덤 씨앗 박스 데이터 */
+  g.boxTier=Math.max(0,Math.min(SEED_BOX_TYPES.length-1,Number(saved.boxTier)||0));
+  g.boxUnlocked=Array.isArray(saved.boxUnlocked)
+    ? saved.boxUnlocked.map(Boolean).slice(0,SEED_BOX_TYPES.length)
+    : [true,false,false,false];
+  while(g.boxUnlocked.length<SEED_BOX_TYPES.length) g.boxUnlocked.push(false);
+  g.boxUnlocked[0]=true;
+  if(!g.boxUnlocked[g.boxTier]) g.boxTier=0;
+  g.boxLastResult=saved.boxLastResult||null;
+
+
+  /* 퓨즈 머신 데이터 */
+  let legacyFusionInputToRefund=null;
+  let legacyFusionReadyToConvert=null;
+
+  if(saved.fusion && typeof saved.fusion==="object"){
+
+    g.fusion.machineOwned =
+      saved.fusion.machineOwned!==false;
+
+    g.fusion.equipped =
+      !!saved.fusion.equipped;
+
+    g.fusion.autoPull =
+      !!saved.fusion.autoPull;
+
+    g.fusion.input =
+      saved.fusion.input && typeof saved.fusion.input==="object"
+        ? saved.fusion.input
+        : null;
+
+    /* 예전 퓨즈는 씨앗 4개를 합쳐서 ×4/×16...을 만들었어.
+       지금은 씨앗 1개를 한 단계 업그레이드하는 방식이므로,
+       예전 저장 데이터는 가능한 범위에서 인챈트 단계로 변환해. */
+    if(g.fusion.input){
+      legacyFusionInputToRefund={...g.fusion.input};
+      g.fusion.input=null;
+    }
+
+    g.fusion.ready =
+      saved.fusion.ready && typeof saved.fusion.ready==="object"
+        ? {...saved.fusion.ready}
+        : null;
+
+    if(g.fusion.ready){
+      legacyFusionReadyToConvert={...g.fusion.ready};
+      g.fusion.ready=null;
+    }
+
+    g.fusion.items =
+      saved.fusion.items && typeof saved.fusion.items==="object"
+        ? saved.fusion.items
+        : {};
+
+    const convertedFusionItems={};
+
+    Object.keys(g.fusion.items).forEach(id=>{
+      if(!CROPS[id]) return;
+
+      const source=g.fusion.items[id];
+      if(!source || typeof source!=="object") return;
+
+      const target={};
+
+      Object.keys(source).forEach(key=>{
+        const oldMultiplier=Number(key);
+        const count=Math.max(0,Number(source[key])||0);
+        if(count<=0 || !Number.isFinite(oldMultiplier)) return;
+
+        let enchantLevel;
+        if(oldMultiplier<=0){
+          return;
+        }else if(oldMultiplier===1){
+          enchantLevel=1;
+        }else{
+          enchantLevel=Math.max(1,Math.round(Math.log(oldMultiplier)/Math.log(4)));
+        }
+
+        target[enchantLevel]=(Number(target[enchantLevel])||0)+count;
+      });
+
+      convertedFusionItems[id]=target;
+    });
+
+    g.fusion.items=convertedFusionItems;
+  }
+
+
+  /* 페이지가 이미 있으면 그대로 변환 */
+
+  if(
+    Array.isArray(
+      saved.pages
+    ) &&
+    saved.pages.length
+  ){
+
+    g.pages=
+      saved.pages.map(
+        (p,index)=>{
+
+          const page=
+            createDefaultPage(
+              p.name||
+              `${index+1}페이지`
+            );
+
+
+          if(
+            Array.isArray(
+              p.plots
+            )
+          ){
+
+            page.plots=
+              p.plots;
+
+          }else if(
+            p.plot
+          ){
+
+            page.plots=[
+              p.plot,
+              null
+            ];
+
+          }
+
+
+          page.autoPlant=
+            !!p.autoPlant;
+
+
+          page.autoBuyPlots=
+            !!p.autoBuyPlots;
+
+
+          page.selectedSeedId=
+            IDS.includes(
+              p.selectedSeedId
+            )
+              ?
+                p.selectedSeedId
+              :
+                "apple";
+
+
+          return page;
+
+        }
+      );
+
+  }
+
+
+  /*
+    예전 버전은 plot이 게임 바로 안에 있었음.
+  */
+
+  else{
+
+    const pageName=
+      (
+        typeof saved.pageName===
+        "string" &&
+        saved.pageName.trim()
+      )
+        ?
+          saved.pageName.trim()
+        :
+          "1페이지";
+
+
+    const page=
+      createDefaultPage(
+        pageName
+      );
+
+
+    if(
+      Array.isArray(
+        saved.plots
+      )
+    ){
+
+      page.plots=
+        saved.plots;
+
+    }
+    else if(
+      saved.plot
+    ){
+
+      page.plots=[
+        saved.plot,
+        null
+      ];
+
+    }
+
+
+    page.autoPlant=
+      !!saved.auto?.plant;
+
+
+    page.autoBuyPlots=
+      !!saved.auto?.buyPlot;
+
+
+    page.selectedSeedId=
+      IDS.includes(
+        saved.auto?.selectedSeed
+      )
+        ?
+          saved.auto.selectedSeed
+        :
+          "apple";
+
+
+    g.pages=[
+      page
+    ];
+
+  }
+
+
+  g.activePageIndex=
+    Number.isInteger(
+      saved.activePageIndex
+    )
+      ?
+        Math.min(
+          Math.max(
+            0,
+            saved.activePageIndex
+          ),
+          g.pages.length-1
+        )
+      :
+        0;
+
+
+  IDS.forEach(
+    id=>{
+
+      g.seeds[id]=
+        Number(
+          saved.seeds?.[id]
+        )||0;
+
+
+      g.harvest[id]=
+        Number(
+          saved.harvest?.[id]
+        )||0;
+
+
+      g.collection[id]=
+        !!saved.collection?.[id];
+
+
+      g.prices[id]=
+        Number(
+          saved.prices?.[id]
+        )||
+        CROPS[id].base;
+
+
+      g.history[id]=
+        Array.isArray(
+          saved.history?.[id]
+        )&&
+        saved.history[id].length
+          ?
+            saved.history[id].slice(-25)
+          :
+            [
+              g.prices[id]
+            ];
+
+
+      g.auto.targets[id]=
+        Number(
+          saved.auto?.targets?.[id]
+        )||
+        CROPS[id].base;
+
+    }
+  );
+
+
+  /* 예전 퓨즈 작업이 저장돼 있었다면 재료를 돌려준다.
+     현재 규칙은 씨앗 4개를 합쳐 다음 단계 1개를 만드는 방식이므로,
+     옛 작업이 진행 중이었다면 사용 재료를 원래 보유량으로 되돌린다. */
+  if(legacyFusionInputToRefund){
+    const oldId=legacyFusionInputToRefund.id;
+    const oldCount=Math.max(1,Number(legacyFusionInputToRefund.count)||4);
+    const oldMultiplier=Math.max(1,Number(legacyFusionInputToRefund.multiplier)||1);
+
+    if(oldId && CROPS[oldId]){
+      if(oldMultiplier===1){
+        g.seeds[oldId]=Math.max(0,Number(g.seeds[oldId])||0)+oldCount;
+      }else{
+        const level=Math.max(1,Math.round(Math.log(oldMultiplier)/Math.log(4)));
+        if(!g.fusion.items[oldId]) g.fusion.items[oldId]={};
+        g.fusion.items[oldId][level]=
+          (Number(g.fusion.items[oldId][level])||0)+oldCount;
+      }
+    }
+  }
+
+  if(legacyFusionReadyToConvert){
+    const oldId=legacyFusionReadyToConvert.id;
+    const oldMultiplier=Math.max(1,Number(legacyFusionReadyToConvert.multiplier)||1);
+    if(oldId && CROPS[oldId]){
+      const level=oldMultiplier===1
+        ? 1
+        : Math.max(1,Math.round(Math.log(oldMultiplier)/Math.log(4)));
+      if(!g.fusion.items[oldId]) g.fusion.items[oldId]={};
+      g.fusion.items[oldId][level]=
+        (Number(g.fusion.items[oldId][level])||0)+1;
+    }
+  }
+
+
+  if(saved.auto){
+
+    g.auto.buyBox=
+      !!saved.auto.buyBox;
+
+    g.auto.buyBoxReserve=
+      Number(
+        saved.auto.buyBoxReserve
+      )||300;
+
+    g.auto.harvestOwned=
+      !!saved.auto.harvestOwned;
+
+    g.auto.harvest=
+      !!saved.auto.harvest;
+
+    g.auto.sellOwned=
+      !!saved.auto.sellOwned;
+
+    g.auto.sell=
+      !!saved.auto.sell;
+
+  }
+
+
+  g.pages=
+    g.pages.map(
+      page=>{
+
+        while(
+          page.plots.length<2
+        ){
+
+          page.plots.push(
+            null
+          );
+
+        }
+
+
+        page.plots=
+          page.plots.map(
+            plot=>{
+
+              if(!plot){
+
+                return null;
+
+              }
+
+
+              if(
+                !plot.plantedAt
+              ){
+
+                plot.plantedAt=
+                  plot.started||
+                  Date.now();
+
+              }
+
+
+              if(
+                !plot.started
+              ){
+
+                plot.started=
+                  plot.plantedAt;
+
+              }
+
+
+              return plot;
+
+            }
+          );
+
+
+        return page;
+
+      }
+    );
+
+
+
+
+
+  /* 기존 한 농장에 섞여 있던 식용/과일 작물을 두 농장으로 분리한다. */
+  const foodIds=new Set(["wheat","tomato","corn","carrot"]);
+  const fruitIds=new Set(["apple","grape","golden","pine"]);
+
+  function clonePageForFarm(page, kind, index){
+    const isFruit=kind==="fruit";
+    const allowed=isFruit?fruitIds:foodIds;
+    const cloned={
+      name:page.name||`${index+1}페이지`,
+      plots:(Array.isArray(page.plots)?page.plots:[]).map(plot=>{
+        if(!plot || !plot.id) return null;
+        return allowed.has(plot.id) ? plot : null;
+      }),
+      autoPlant:!!page.autoPlant,
+      autoBuyPlots:!!page.autoBuyPlots,
+      selectedSeedId:allowed.has(page.selectedSeedId)
+        ? page.selectedSeedId
+        : (isFruit?"apple":"wheat")
+    };
+    while(cloned.plots.length<2) cloned.plots.push(null);
+    return cloned;
+  }
+
+  if(Array.isArray(saved?.fruitPages) && saved.fruitPages.length){
+    g.fruitPages=saved.fruitPages.map((page,index)=>clonePageForFarm(page,"fruit",index));
+  }else{
+    const sourcePages=g.pages;
+    g.pages=sourcePages.map((page,index)=>clonePageForFarm(page,"food",index));
+    g.fruitPages=sourcePages.map((page,index)=>clonePageForFarm(page,"fruit",index));
+  }
+
+  if(!Array.isArray(g.activePageIndexes)){
+    g.activePageIndexes={food:0,fruit:0};
+  }
+  g.activePageIndexes.food=Number.isInteger(Number(g.activePageIndexes.food))?Math.max(0,Number(g.activePageIndexes.food)):0;
+  g.activePageIndexes.fruit=Number.isInteger(Number(g.activePageIndexes.fruit))?Math.max(0,Number(g.activePageIndexes.fruit)):0;
+  if(g.activePageIndexes.food>=g.pages.length) g.activePageIndexes.food=0;
+  if(g.activePageIndexes.fruit>=g.fruitPages.length) g.activePageIndexes.fruit=0;
+  g.lastFarmArea=(saved?.lastFarmArea==="fruit")?"fruit":"food";
+  g.activePageIndex=g.activePageIndexes[g.lastFarmArea]||0;
+
+  if(!g.forestFarm || typeof g.forestFarm!=="object"){
+    g.forestFarm={
+      saplings:{oak:1,pine:1,apple:1},
+      wood:{oak:0,pine:0,apple:0},
+      slots:[null,null,null]
+    };
+  }
+
+  g.forestFarm.saplings={
+    oak:Math.max(0,Number(g.forestFarm.saplings?.oak)||0),
+    pine:Math.max(0,Number(g.forestFarm.saplings?.pine)||0),
+    apple:Math.max(0,Number(g.forestFarm.saplings?.apple)||0)
+  };
+
+  g.forestFarm.wood={
+    oak:Math.max(0,Number(g.forestFarm.wood?.oak)||0),
+    pine:Math.max(0,Number(g.forestFarm.wood?.pine)||0),
+    apple:Math.max(0,Number(g.forestFarm.wood?.apple)||0)
+  };
+
+  if(!Array.isArray(g.forestFarm.slots)){
+    g.forestFarm.slots=[null,null,null];
+  }
+
+  g.forestFarm.slots=g.forestFarm.slots.map(slot=>{
+    if(!slot || !slot.id || !FOREST_TREES[slot.id]) return null;
+    return {
+      id:slot.id,
+      plantedAt:Number(slot.plantedAt)||Date.now(),
+      readyAt:Number(slot.readyAt)||Date.now()
+    };
+  });
+
+  if(!g.forestFarm.auto || typeof g.forestFarm.auto!=="object"){
+    g.forestFarm.auto={
+      buySaplings:false,
+      plant:false,
+      harvest:false,
+      sell:false,
+      buySlots:false,
+      selectedTree:"oak"
+    };
+  }
+
+  g.forestFarm.auto.buySaplings=!!g.forestFarm.auto.buySaplings;
+  g.forestFarm.auto.plant=!!g.forestFarm.auto.plant;
+  g.forestFarm.auto.harvest=!!g.forestFarm.auto.harvest;
+  g.forestFarm.auto.sell=!!g.forestFarm.auto.sell;
+  g.forestFarm.auto.buySlots=!!g.forestFarm.auto.buySlots;
+  g.forestFarm.auto.selectedTree=
+    FOREST_TREES[g.forestFarm.auto.selectedTree]
+      ? g.forestFarm.auto.selectedTree
+      : "oak";
+
+  return g;
+
+}
+
+
+/* =========================================================
+   월드 목록
+========================================================= */
+
+function loadWorldIndex(){
+
+  try{
+
+    const raw=
+      localStorage.getItem(
+        WORLD_INDEX_KEY
+      );
+
+
+    if(raw){
+
+      const parsed=
+        JSON.parse(raw);
+
+
+      if(
+        parsed &&
+        Array.isArray(
+          parsed.worlds
+        ) &&
+        parsed.worlds.length
+      ){
+
+        return parsed;
+
+      }
+
+    }
+
+  }catch(e){
+
+  }
+
+
+  const migrated=
+    migrateOldWorldSystem();
+
+
+  if(migrated){
+
+    return migrated;
+
+  }
+
+
+  const legacy=
+    findLegacySave();
+
+
+  const id=
+    "world_"+
+    Date.now();
+
+
+  const index={
+
+    activeId:id,
+
+    worlds:[
+
+      {
+        id:id,
+        name:"나의 첫 월드"
+      }
+
+    ]
+
+  };
+
+
+  localStorage.setItem(
+    worldKey(id),
+    JSON.stringify(
+      migrateGameData(
+        legacy
+      )
+    )
+  );
+
+
+  saveWorldIndexData(
+    index
+  );
+
+
+  return index;
+
+}
+
+
+/* =========================================================
+   월드 목록 저장
+========================================================= */
+
+function saveWorldIndexData(
+  index=worldIndex
+){
+
+  localStorage.setItem(
+    WORLD_INDEX_KEY,
+    JSON.stringify(index)
+  );
+
+}
+
+
+/* =========================================================
+   월드 불러오기
+========================================================= */
+
+function loadWorldGame(
+  id
+){
+
+  const raw=
+    localStorage.getItem(
+      worldKey(id)
+    );
+
+
+  if(!raw){
+
+    return createDefaultGame();
+
+  }
+
+
+  try{
+
+    return migrateGameData(
+      JSON.parse(raw)
+    );
+
+  }catch(e){
+
+    return createDefaultGame();
+
+  }
+
+}
+
+
+/* =========================================================
+   저장
+========================================================= */
+
+function saveGame(){
+
+  if(
+    !activeWorldId||
+    !game
+  ){
+
+    return;
+
+  }
+
+
+  game.lastMarketUpdate=
+    lastMarketUpdate;
+
+  if(!game.activePageIndexes) game.activePageIndexes={food:0,fruit:0};
+  game.activePageIndexes[currentFarmArea]=activePageIndex;
+  game.lastFarmArea=currentFarmArea;
+
+
+  localStorage.setItem(
+    worldKey(
+      activeWorldId
+    ),
+    JSON.stringify(game)
+  );
+
+}
+
+
+/* =========================================================
+   초기화
+========================================================= */
+
+function initWorldSystem(){
+
+  worldIndex=
+    loadWorldIndex();
+
+
+  activeWorldId=
+    worldIndex.activeId;
+
+
+  if(
+    !worldIndex.worlds.some(
+      w=>
+        w.id===
+        activeWorldId
+    )
+  ){
+
+    activeWorldId=
+      worldIndex.worlds[0].id;
+
+    worldIndex.activeId=
+      activeWorldId;
+
+    saveWorldIndexData();
+
+  }
+
+
+  game=
+    loadWorldGame(
+      activeWorldId
+    );
+
+  if(typeof game.farmXP!=="number"){
+    game.farmXP=0;
+  }
+
+  if(!game.fusion || typeof game.fusion!=="object"){
+    game.fusion={
+      machineOwned:true,
+      equipped:false,
+      autoPull:false,
+      input:null,
+      ready:null,
+      items:{}
+    };
+  }
+
+  if(!game.fusion.items || typeof game.fusion.items!=="object"){
+    game.fusion.items={};
+  }
+
+  if(!Array.isArray(game.boxUnlocked)) game.boxUnlocked=[true,false,false,false];
+  while(game.boxUnlocked.length<SEED_BOX_TYPES.length) game.boxUnlocked.push(false);
+  game.boxUnlocked[0]=true;
+  game.boxTier=Math.max(0,Math.min(SEED_BOX_TYPES.length-1,Number(game.boxTier)||0));
+  if(!game.boxUnlocked[game.boxTier]) game.boxTier=0;
+  if(typeof game.boxLastResult!=="string") game.boxLastResult=null;
+
+  syncCropUnlocks(false);
+
+  currentFarmArea=(game.lastFarmArea==="fruit")?"fruit":"food";
+  activePageIndex=
+    Number(game.activePageIndexes?.[currentFarmArea] ?? game.activePageIndex ?? 0)||0;
+
+}
+
+
+/* =========================================================
+   현재 월드
+========================================================= */
+
+function getCurrentWorld(){
+
+  return worldIndex.worlds.find(
+    w=>
+      w.id===
+      activeWorldId
+  );
+
+}
+
+
+/* =========================================================
+   현재 페이지
+========================================================= */
+
+function getCurrentPage(){
+
+  const pages=getCurrentFarmPages();
+
+  if(!Array.isArray(pages) || !pages.length){
+    return null;
+  }
+
+  if(activePageIndex<0 || activePageIndex>=pages.length){
+    activePageIndex=0;
+  }
+
+  if(!game.activePageIndexes || typeof game.activePageIndexes!=="object"){
+    game.activePageIndexes={food:0,fruit:0};
+  }
+
+  game.activePageIndexes[currentFarmArea]=activePageIndex;
+  game.activePageIndex=activePageIndex;
+
+  return pages[activePageIndex];
+
+}
+
+
+/* =========================================================
+   농장 구역 전환
+========================================================= */
+
+function setFarmArea(area){
+
+  if(area==="forest"){
+    currentFarmView="forest";
+    updateFarmViewVisibility();
+    updateFarmAreaHeader();
+    const forest=document.getElementById("forestFarmPanel");
+    if(forest) forest.scrollIntoView({behavior:"smooth",block:"start"});
+    return;
+  }
+
+  if(!FARM_AREA_CONFIG[area]) return;
+
+  currentFarmView="crop";
+
+  if(game){
+    if(!game.activePageIndexes || typeof game.activePageIndexes!=="object"){
+      game.activePageIndexes={food:0,fruit:0};
+    }
+    game.activePageIndexes[currentFarmArea]=activePageIndex;
+    game.lastFarmArea=area;
+    saveGame();
+  }
+
+  currentFarmArea=area;
+  const pages=getCurrentFarmPages();
+  activePageIndex=Number(game?.activePageIndexes?.[area]||0);
+  if(activePageIndex<0 || activePageIndex>=pages.length) activePageIndex=0;
+  if(game?.activePageIndexes) game.activePageIndexes[area]=activePageIndex;
+
+  const ids=getCurrentFarmCropIds();
+  if(ids.length){
+    if(!ids.includes(selected)) selected=ids[0];
+    if(!selectedFusionItem || !ids.includes(selectedFusionItem.id)){
+      selectedFusionItem={id:ids[0],enchantLevel:0};
+    }
+    const page=getCurrentPage();
+    if(page && !ids.includes(page.selectedSeedId)){
+      page.selectedSeedId=FARM_AREA_CONFIG[area].defaultSeed;
+    }
+  }
+
+  renderAll();
+  renderAutoPanel();
+  updateFarmAreaHeader();
+  updateFarmViewVisibility();
+  saveGame();
+
+  const target=document.getElementById("cropFarmArea");
+  if(target) target.scrollIntoView({behavior:"smooth",block:"start"});
+}
+
+function updateFarmAreaHeader(){
+  const title=document.getElementById("farmAreaTitle");
+  const inlineTitle=document.getElementById("farmAreaTitleInline");
+  const note=document.getElementById("farmAreaNote");
+  const buttons=document.querySelectorAll("[data-farm-area]");
+
+  const config=FARM_AREA_CONFIG[currentFarmArea]||FARM_AREA_CONFIG.food;
+  if(title) title.textContent=currentFarmView==="forest" ? "🌲 숲농장" : config.title;
+  if(inlineTitle) inlineTitle.textContent=config.title;
+  if(note) note.textContent=currentFarmView==="forest" ? "나무를 키워 목재를 만들고 판매하는 부업 농장이야." : config.note;
+  buttons.forEach(btn=>{
+    const target=currentFarmView==="forest" ? "forest" : currentFarmArea;
+    btn.classList.toggle("active",btn.dataset.farmArea===target);
+  });
+}
+
+function updateFarmViewVisibility(){
+  const crop=document.getElementById("cropFarmArea");
+  const forest=document.getElementById("forestFarmPanel");
+  if(crop) crop.style.display=currentFarmView==="crop" ? "grid" : "none";
+  if(forest) forest.style.display=currentFarmView==="forest" ? "block" : "none";
+}
+
+
+/* =========================================================
+   페이지 가격
+========================================================= */
+
+function getNextPagePrice(){
+  const pages=getCurrentFarmPages();
+  return Math.round(
+    FIRST_PAGE_COST*
+    Math.pow(PAGE_PRICE_RATE,Math.max(0,pages.length-1))
+  );
+}
+
+
+/* =========================================================
+   새 페이지 만들기
+========================================================= */
+
+function addPage(){
+  const pages=getCurrentFarmPages();
+  const price=getNextPagePrice();
+  if(game.money<price){
+    showToast(`🪙 페이지 추가에 ${money(price)}원이 필요해!`);
+    return;
+  }
+
+  const pageNumber=pages.length+1;
+  game.money-=price;
+  pages.push(createDefaultPage(`${pageNumber}페이지`));
+  const page=pages[pages.length-1];
+  page.selectedSeedId=FARM_AREA_CONFIG[currentFarmArea].defaultSeed;
+  activePageIndex=pages.length-1;
+  if(!game.activePageIndexes) game.activePageIndexes={food:0,fruit:0};
+  game.activePageIndexes[currentFarmArea]=activePageIndex;
+  game.lastFarmArea=currentFarmArea;
+  saveGame();
+  renderAll();
+  renderAutoPanel();
+  showToast(`📄 ${getCurrentFarmAreaTitle()} ${pageNumber}페이지를 만들었어! -${money(price)}원`);
+}
+
+
+/* =========================================================
+   페이지 이동
+========================================================= */
+
+function switchPage(index){
+  const pages=getCurrentFarmPages();
+  if(index<0 || index>=pages.length) return;
+  activePageIndex=index;
+  if(!game.activePageIndexes) game.activePageIndexes={food:0,fruit:0};
+  game.activePageIndexes[currentFarmArea]=index;
+  game.activePageIndex=index;
+  game.lastFarmArea=currentFarmArea;
+  saveGame();
+  renderAll();
+  renderAutoPanel();
+}
+
+
+/* =========================================================
+   페이지 이름 변경
+========================================================= */
+
+function renamePage(index){
+  const pages=getCurrentFarmPages();
+  const page=pages[index];
+  if(!page) return;
+  const value=prompt("페이지 이름을 입력해줘.",page.name);
+  if(value===null) return;
+  const name=value.trim();
+  if(!name){ showToast("페이지 이름을 비워둘 수 없어!"); return; }
+  page.name=name.slice(0,20);
+  saveGame();
+  renderPageTabs();
+  renderPlots();
+  showToast(`📄 "${page.name}"으로 변경했어!`);
+}
+
+
+/* =========================================================
+   페이지 탭
+========================================================= */
+
+function renderPageTabs(){
+  const box=document.getElementById("farmTabs");
+  if(!box) return;
+  const pages=getCurrentFarmPages();
+  box.innerHTML=pages.map((page,index)=>{
+    const active=index===activePageIndex;
+    const used=page.plots.filter(Boolean).length;
+    return `
+      <button class="farm-tab ${active?"active":""}" onclick="switchPage(${index})" ondblclick="renamePage(${index})" title="한 번 클릭: 페이지 이동 / 더블 클릭: 이름 변경">
+        ${escapeHtml(page.name)} · ${used}/${page.plots.length}
+      </button>
+    `;
+  }).join("");
+  box.innerHTML+=`<button class="farm-tab-add" onclick="addPage()">＋ 페이지 추가</button>`;
+}
+
+
+/* =========================================================
+   월드 생성
+========================================================= */
+
+function createWorld(){
+
+  const suggested=
+    `월드 ${worldIndex.worlds.length+1}`;
+
+
+  const input=
+    prompt(
+      "새 월드 이름을 입력해줘.",
+      suggested
+    );
+
+
+  if(
+    input===null
+  ){
+
+    return;
+
+  }
+
+
+  const name=
+    input.trim();
+
+
+  if(!name){
+
+    showToast(
+      "월드 이름을 입력해야 해!"
+    );
+
+    return;
+
+  }
+
+
+  const id=
+    "world_"+
+    Date.now()+
+    "_"+
+    Math.random()
+      .toString(36)
+      .slice(2,7);
+
+
+  worldIndex.worlds.push({
+
+    id:id,
+
+    name:
+      name.slice(
+        0,
+        30
+      )
+
+  });
+
+
+  localStorage.setItem(
+    worldKey(id),
+    JSON.stringify(
+      createDefaultGame()
+    )
+  );
+
+
+  saveWorldIndexData();
+
+
+  switchWorld(
+    id
+  );
+
+
+  showToast(
+    `🌎 "${name}" 월드를 만들었어!`
+  );
+
+}
+
+
+/* =========================================================
+   월드 변경
+========================================================= */
+
+function switchWorld(id){
+
+  if(
+    !worldIndex.worlds.some(
+      w=>
+        w.id===
+        id
+    )
+  ){
+
+    return;
+
+  }
+
+
+  saveGame();
+
+
+  activeWorldId=
+    id;
+
+
+  worldIndex.activeId=
+    id;
+
+
+  saveWorldIndexData();
+
+
+  game=
+    loadWorldGame(
+      id
+    );
+
+
+  activePageIndex=
+    game.activePageIndex||
+    0;
+
+
+  selected=
+    "apple";
+
+
+  renderAll();
+
+  renderAutoPanel();
+
+  renderWorldList();
+
+}
+
+
+/* =========================================================
+   월드 이름 변경
+========================================================= */
+
+function renameWorld(id){
+
+  const world=
+    worldIndex.worlds.find(
+      w=>
+        w.id===
+        id
+    );
+
+
+  if(!world){
+
+    return;
+
+  }
+
+
+  const value=
+    prompt(
+      "월드 이름을 바꿔줘.",
+      world.name
+    );
+
+
+  if(
+    value===null
+  ){
+
+    return;
+
+  }
+
+
+  const name=
+    value.trim();
+
+
+  if(!name){
+
+    showToast(
+      "월드 이름을 비워둘 수 없어!"
+    );
+
+    return;
+
+  }
+
+
+  world.name=
+    name.slice(
+      0,
+      30
+    );
+
+
+  saveWorldIndexData();
+
+  renderWorldList();
+
+
+  showToast(
+    `🌎 "${world.name}"으로 변경했어!`
+  );
+
+}
+
+
+/* =========================================================
+   월드 삭제
+========================================================= */
+
+function deleteWorld(id){
+
+  if(
+    worldIndex.worlds.length<=1
+  ){
+
+    showToast(
+      "월드는 최소 1개가 필요해!"
+    );
+
+    return;
+
+  }
+
+
+  const world=
+    worldIndex.worlds.find(
+      w=>
+        w.id===
+        id
+    );
+
+
+  if(!world){
+
+    return;
+
+  }
+
+
+  if(
+    !confirm(
+      `"${world.name}" 월드를 삭제할까?\n이 월드의 모든 게임 기록이 삭제돼.`
+    )
+  ){
+
+    return;
+
+  }
+
+
+  localStorage.removeItem(
+    worldKey(id)
+  );
+
+
+  worldIndex.worlds=
+    worldIndex.worlds.filter(
+      w=>
+        w.id!==
+        id
+    );
+
+
+  if(
+    activeWorldId===
+    id
+  ){
+
+    activeWorldId=
+      worldIndex.worlds[0].id;
+
+
+    worldIndex.activeId=
+      activeWorldId;
+
+
+    saveWorldIndexData();
+
+
+    game=
+      loadWorldGame(
+        activeWorldId
+      );
+
+
+    activePageIndex=
+      game.activePageIndex||
+      0;
+
+
+    selected=
+      "apple";
+
+
+    renderAll();
+
+    renderAutoPanel();
+
+  }else{
+
+    saveWorldIndexData();
+
+  }
+
+
+  renderWorldList();
+
+
+  showToast(
+    "🗑️ 월드를 삭제했어."
+  );
+
+}
+
+
+/* =========================================================
+   월드 목록
+========================================================= */
+
+function renderWorldList(){
+
+  const box=
+    document.getElementById(
+      "worldList"
+    );
+
+
+  const current=
+    getCurrentWorld();
+
+
+  document.getElementById(
+    "currentWorldName"
+  ).textContent=
+    current
+      ?
+        current.name
+      :
+        "";
+
+
+  box.innerHTML=
+    worldIndex.worlds.map(
+      world=>{
+
+        const active=
+          world.id===
+          activeWorldId;
+
+
+        return `
+
+          <div
+            class="
+              world-card
+              ${active?"active":""}
+            "
+          >
+
+            <div class="world-name">
+
+              🌎 ${escapeHtml(
+                world.name
+              )}
+
+            </div>
+
+
+            <div class="world-status">
+
+              ${
+                active
+                  ?
+                    "✅ 지금 플레이 중"
+                  :
+                    "저장된 독립 월드"
+              }
+
+            </div>
+
+
+            <div class="world-actions">
+
+              <button
+                class="world-select"
+                onclick="
+                  switchWorld(
+                    '${world.id}'
+                  )
+                "
+                ${active?"disabled":""}
+              >
+
+                ${
+                  active
+                    ?
+                      "현재 월드"
+                    :
+                      "이 월드 플레이"
+                }
+
+              </button>
+
+
+              <button
+                class="world-rename"
+                onclick="
+                  renameWorld(
+                    '${world.id}'
+                  )
+                "
+              >
+
+                ✏️ 이름 변경
+
+              </button>
+
+
+              <button
+                class="world-delete"
+                onclick="
+                  deleteWorld(
+                    '${world.id}'
+                  )
+                "
+                ${
+                  worldIndex.worlds.length<=1
+                    ?
+                      "disabled"
+                    :
+                      ""
+                }
+              >
+
+                🗑️ 이 월드 삭제
+
+              </button>
+
+            </div>
+
+          </div>
+
+        `;
+
+      }
+    ).join("");
+
+}
+
+
+/* =========================================================
+   HTML 안전 처리
+========================================================= */
+
+function escapeHtml(text){
+
+  return String(text)
+    .replace(/&/g,"&amp;")
+    .replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;")
+    .replace(/'/g,"&#039;");
+
+}
+
+
+/* =========================================================
+   공용
+========================================================= */
+
+function money(value){
+
+  if(
+    Number.isInteger(value)
+  ){
+
+    return value.toLocaleString(
+      "ko-KR"
+    );
+
+  }
+
+
+  return value.toLocaleString(
+    "ko-KR",
+    {
+      minimumFractionDigits:1,
+      maximumFractionDigits:1
+    }
+  );
+
+}
+
+
+function showToast(message){
+
+  const el=
+    document.getElementById(
+      "toast"
+    );
+
+
+  el.textContent=
+    message;
+
+
+  el.classList.add(
+    "show"
+  );
+
+
+  clearTimeout(
+    showToast.timer
+  );
+
+
+  showToast.timer=
+    setTimeout(
+      ()=>{
+        el.classList.remove(
+          "show"
+        );
+      },
+      1800
+    );
+
+}
+
+
+/* =========================================================
+   랜덤 씨앗
+========================================================= */
+
+function getCurrentSeedBox(){
+
+  const tier=Math.max(
+    0,
+    Math.min(
+      SEED_BOX_TYPES.length-1,
+      Number(game.boxTier)||0
+    )
+  );
+
+  return SEED_BOX_TYPES[tier];
+
+}
+
+
+function getRarityLabel(cls){
+
+  if(cls==="high") return "고급";
+  if(cls==="rare") return "희귀";
+  if(cls==="legend") return "전설";
+  return "일반";
+
+}
+
+
+function getBasicRarityChances(){
+
+  const totals={
+    normal:0,
+    high:0,
+    rare:0,
+    legend:0
+  };
+
+  IDS.forEach(
+    id=>{
+      const crop=CROPS[id];
+      if(crop && totals[crop.cls]!==undefined){
+        totals[crop.cls]+=Number(crop.weight)||0;
+      }
+    }
+  );
+
+  const total=
+    Object.values(totals).reduce((a,b)=>a+b,0)||1;
+
+  return {
+    normal:totals.normal/total*100,
+    high:totals.high/total*100,
+    rare:totals.rare/total*100,
+    legend:totals.legend/total*100
+  };
+
+}
+
+
+function getSeedBoxRarityChances(tier){
+
+  const box=SEED_BOX_TYPES[tier];
+  return box.rarityChance || getBasicRarityChances();
+
+}
+
+
+function formatPercent(value){
+
+  const n=Math.round(Number(value)*10)/10;
+  return Number.isInteger(n) ? String(n) : n.toFixed(1);
+
+}
+
+
+function getRandomSeed(tier=game.boxTier){
+
+  const box=SEED_BOX_TYPES[
+    Math.max(0,Math.min(SEED_BOX_TYPES.length-1,Number(tier)||0))
+  ];
+
+  /* 기본 상자는 기존 작물 weight 확률을 그대로 유지 */
+  if(!box.rarityChance){
+
+    const total=
+      IDS.reduce(
+        (sum,id)=>sum+(Number(CROPS[id].weight)||0),
+        0
+      );
+
+    let r=Math.random()*total;
+
+    for(const id of IDS){
+
+      r-=Number(CROPS[id].weight)||0;
+
+      if(r<=0) return id;
+
+    }
+
+    return IDS[0] || "apple";
+
+  }
+
+  /* 업그레이드 상자는 먼저 희귀도, 그 다음 같은 희귀도 안에서 원래 weight */
+  const rarityWeights=box.rarityChance;
+  const rarityOrder=["normal","high","rare","legend"];
+
+  let rarityRoll=Math.random()*100;
+  let pickedRarity="normal";
+
+  for(const rarity of rarityOrder){
+
+    rarityRoll-=Number(rarityWeights[rarity])||0;
+
+    if(rarityRoll<=0){
+      pickedRarity=rarity;
+      break;
+    }
+
+  }
+
+  let candidates=IDS.filter(
+    id=>CROPS[id] && CROPS[id].cls===pickedRarity
+  );
+
+  if(!candidates.length){
+    candidates=[...IDS];
+  }
+
+  const total=candidates.reduce(
+    (sum,id)=>sum+(Number(CROPS[id].weight)||0),
+    0
+  )||candidates.length;
+
+  let r=Math.random()*total;
+
+  for(const id of candidates){
+
+    r-=Number(CROPS[id].weight)||0;
+
+    if(r<=0) return id;
+
+  }
+
+  return candidates[0] || "apple";
+
+}
+
+
+function changeSeedBoxTier(direction){
+
+  const next=
+    (Number(game.boxTier)||0)+Number(direction||0);
+
+  if(next<0 || next>=SEED_BOX_TYPES.length){
+    return;
+  }
+
+  if(!game.boxUnlocked[next]){
+
+    showToast(
+      `🔒 ${SEED_BOX_TYPES[next].name}은(는) 먼저 업그레이드해야 해!`
+    );
+
+    return;
+
+  }
+
+  game.boxTier=next;
+  saveGame();
+  renderGacha();
+
+}
+
+
+function upgradeSeedBox(){
+
+  const current=Math.max(0,Number(game.boxTier)||0);
+  const next=current+1;
+
+  if(next>=SEED_BOX_TYPES.length){
+    showToast("👑 씨앗 박스가 최고 단계야!");
+    return;
+  }
+
+  if(game.boxUnlocked[next]){
+    game.boxTier=next;
+    saveGame();
+    renderGacha();
+    return;
+  }
+
+  const cost=SEED_BOX_TYPES[next].upgradeCost;
+
+  if(game.money<cost){
+    showToast(`🪙 씨앗 박스 업그레이드에 ${money(cost)}원이 필요해!`);
+    return;
+  }
+
+  game.money-=cost;
+  game.boxUnlocked[next]=true;
+  game.boxTier=next;
+  saveGame();
+  renderAll();
+
+  showToast(
+    `⬆️ ${SEED_BOX_TYPES[next].name}으로 업그레이드했어!`
+  );
+
+}
+
+
+function renderGacha(){
+
+  const box=document.getElementById("gachaBox");
+  if(!box || !game) return;
+
+  const tier=Math.max(0,Math.min(SEED_BOX_TYPES.length-1,Number(game.boxTier)||0));
+  const info=SEED_BOX_TYPES[tier];
+  const chances=getSeedBoxRarityChances(tier);
+  const last=game.boxLastResult && CROPS[game.boxLastResult]
+    ? CROPS[game.boxLastResult]
+    : null;
+
+  const canUpgrade=tier<SEED_BOX_TYPES.length-1;
+  const next=canUpgrade ? SEED_BOX_TYPES[tier+1] : null;
+  const unlockedNext=canUpgrade && game.boxUnlocked[tier+1];
+
+  box.innerHTML=`
+
+    <label class="gacha-auto-toggle">
+      <input
+        type="checkbox"
+        ${game.auto.buyBox ? "checked" : ""}
+        onchange="toggleAuto('buyBox',this.checked)"
+      >
+      🤖 자동 뽑기
+    </label>
+
+    <div class="gacha-nav">
+      <button
+        class="gacha-arrow"
+        onclick="changeSeedBoxTier(-1)"
+        ${tier<=0 ? "disabled" : ""}
+      >◀</button>
+
+      <div class="gacha-tier-title">
+        <div class="gacha-tier-name">${info.icon} ${info.name}</div>
+        <div class="gacha-tier-cost">1회 = ${money(info.cost)} 🪙</div>
+      </div>
+
+      <button
+        class="gacha-arrow"
+        onclick="changeSeedBoxTier(1)"
+        ${tier>=SEED_BOX_TYPES.length-1 ? "disabled" : ""}
+      >▶</button>
+    </div>
+
+    <div class="gift">${info.icon}</div>
+
+    <div class="gacha-name">${info.name}</div>
+
+    <div class="gacha-price">
+      ${info.note}
+    </div>
+
+    <div class="gacha-probabilities">
+      <span>일반 ${formatPercent(chances.normal)}%</span>
+      <span>고급 ${formatPercent(chances.high)}%</span>
+      <span>희귀 ${formatPercent(chances.rare)}%</span>
+      <span>전설 ${formatPercent(chances.legend)}%</span>
+    </div>
+
+    <button
+      class="gacha-btn"
+      onclick="manualOpenBox()"
+      ${game.money>=info.cost ? "" : "disabled"}
+    >
+      🎲 ${money(info.cost)}원으로 뽑기
+    </button>
+
+    ${canUpgrade && !unlockedNext ? `
+      <button
+        class="gacha-upgrade-btn"
+        onclick="upgradeSeedBox()"
+      >
+        ⬆️ ${next.icon} ${next.name} 업그레이드 (${money(next.upgradeCost)}원)
+      </button>
+    ` : canUpgrade ? `
+      <div class="gacha-next-note">✅ 다음 단계도 해금됨 · ▶ 화살표로 이동</div>
+    ` : `
+      <div class="gacha-next-note">👑 최고 단계 씨앗 박스</div>
+    `}
+
+    <div class="result" id="boxResult">
+      ${last ? `${last.icon} ${last.name} 씨앗을 얻었어!` : "어떤 씨앗이 나올까?"}
+    </div>
+
+    <div class="gacha-reserve-note">
+      ${game.auto.buyBox
+        ? `🤖 자동 뽑기 실행 중 · ${money(Math.max(0,game.money-info.cost))}원까지 사용 가능`
+        : `자동 뽑기는 자동 기능 메뉴의 <b>남겨둘 금액</b>을 지켜.`}
+    </div>
+
+  `;
+
+}
+
+
+/* =========================================================
+   박스
+========================================================= */
+
+function openBox(
+  silent=false
+){
+
+  const info=getCurrentSeedBox();
+
+  if(
+    game.money<info.cost
+  ){
+
+    return false;
+
+  }
+
+  game.money-=info.cost;
+
+  const id=getRandomSeed(game.boxTier);
+
+  game.seeds[id]=(Number(game.seeds[id])||0)+1;
+  game.boxLastResult=id;
+
+  if(!silent){
+
+    const result=document.getElementById("boxResult");
+    if(result){
+      result.textContent=
+        `${CROPS[id].icon} ${CROPS[id].name} 씨앗을 얻었어!`;
+    }
+
+  }
+
+  saveGame();
+
+  return true;
+
+}
+
+
+function manualOpenBox(){
+
+  if(
+    !openBox(false)
+  ){
+
+    showToast(
+      `🪙 ${money(getCurrentSeedBox().cost)}원이 필요해!`
+    );
+
+    return;
+
+  }
+
+  renderAll();
+
+}
+
+
+/* =========================================================
+   식물
+========================================================= */
+
+function createPlant(id,enchantLevel=0){
+
+  const now=
+    Date.now();
+
+
+  const crop=
+    CROPS[id];
+
+
+  const level=Math.max(0,Number(enchantLevel)||0);
+
+  const plant={
+
+    id:id,
+
+    enchantLevel:level,
+
+    plantedAt:now,
+
+    started:now,
+
+    ready:
+      now+
+      crop.grow*
+      1000
+
+  };
+
+
+  if(
+    crop.repeatType===
+    "timed"
+  ){
+
+    plant.expiresAt=
+      now+
+      crop.lifetime;
+
+  }
+
+
+  return plant;
+
+}
+
+
+
+/* =========================================================
+   심기
+========================================================= */
+
+function plantCrop(
+  id,
+  page,
+  index=-1,
+  silent=false,
+  enchantLevel=0
+){
+
+  const level=Math.max(0,Number(enchantLevel)||0);
+
+  if(!CROPS[id]){
+    return false;
+  }
+
+  let available=0;
+
+  if(level===0){
+    available=Math.max(0,Number(game.seeds[id])||0);
+  }else{
+    available=getFusionCount(id,level);
+  }
+
+  if(available<=0){
+    return false;
+  }
+
+  if(index<0){
+    index=page.plots.findIndex(p=>!p);
+  }
+
+  if(index<0){
+    return false;
+  }
+
+  if(level===0){
+    game.seeds[id]=available-1;
+  }else{
+    removeFusionItem(id,level,1);
+  }
+
+  page.plots[index]=
+    createPlant(id,level);
+
+  saveGame();
+
+  if(!silent){
+    const label=
+      level>0
+        ? `✨ 인챈트 ${level}단계 ${CROPS[id].name}`
+        : `🌱 ${CROPS[id].name}`;
+
+    showToast(`${label}을 심었어!`);
+  }
+
+  return true;
+
+}
+
+
+function manualPlant(id){
+
+  const page=
+    getCurrentPage();
+
+  if(!plantCrop(id,page,-1,false,0)){
+    showToast(
+      game.seeds[id]<=0
+        ?
+          "씨앗이 없어!"
+        :
+          "빈 농장 칸이 없어!"
+    );
+  }
+
+  renderAll();
+
+}
+
+
+function manualPlantEnchanted(id,level){
+
+  const page=getCurrentPage();
+  const enchantLevel=Math.max(1,Number(level)||1);
+
+  if(!plantCrop(id,page,-1,false,enchantLevel)){
+    const count=getFusionCount(id,enchantLevel);
+    showToast(
+      count<=0
+        ? `✨ 인챈트 ${enchantLevel}단계 씨앗이 없어!`
+        : "빈 농장 칸이 없어!"
+    );
+  }
+
+  renderAll();
+
+}
+
+
+
+/* =========================================================
+   수확
+========================================================= */
+
+function isReadyForHarvest(plot){
+
+  return !!plot&&
+    Date.now()>=
+    plot.ready;
+
+}
+
+
+function isExpired(plot){
+
+  if(!plot){
+
+    return false;
+
+  }
+
+
+  const crop=
+    CROPS[plot.id];
+
+
+  if(
+    crop.repeatType!==
+    "timed"
+  ){
+
+    return false;
+
+  }
+
+
+  return Date.now()>=
+    plot.expiresAt;
+
+}
+
+
+function harvestCrop(
+  page,
+  index,
+  silent=false
+){
+
+  const plot=
+    page.plots[index];
+
+
+  if(!plot){
+
+    return false;
+
+  }
+
+
+  const crop=
+    CROPS[plot.id];
+
+
+  const now=
+    Date.now();
+
+
+  if(
+    crop.repeatType===
+    "timed" &&
+    now>=
+    plot.expiresAt
+  ){
+
+    page.plots[index]=
+      null;
+
+
+    saveGame();
+
+
+    return true;
+
+  }
+
+
+  if(
+    now<
+    plot.ready
+  ){
+
+    return false;
+
+  }
+
+
+  const baseAmount=
+    Math.floor(
+      Math.random()*
+      (
+        crop.yieldMax-
+        crop.yieldMin+
+        1
+      )
+    )+
+    crop.yieldMin;
+
+  const enchantLevel=Math.max(0,Number(plot.enchantLevel)||0);
+  const enchantMultiplier=enchantLevel+1;
+  const amount=baseAmount*enchantMultiplier;
+
+
+  game.harvest[plot.id]+=
+    amount;
+
+  /* 수확하면 농장 경험치 획득 */
+  addFarmXP(amount);
+
+  /* 처음 수확하면 도감에 등록 */
+  game.collection[plot.id]=true;
+
+  const enchantText=
+    enchantLevel>0
+      ? ` ✨ 인챈트 ${enchantLevel}단계 · 수확량 ${enchantMultiplier}배`
+      : "";
+
+
+  if(
+    crop.repeatType===
+    "permanent"
+  ){
+
+    plot.ready=
+      now+
+      crop.regrow*
+      1000;
+
+
+    if(!silent){
+
+      showToast(
+        `${crop.icon} ${crop.fruit} ${amount}개 수확!${enchantText} 다시 자라는 중이야.`
+      );
+
+    }
+
+  }
+
+
+  else if(
+    crop.repeatType===
+    "timed"
+  ){
+
+    const nextReady=
+      now+
+      crop.regrow*
+      1000;
+
+
+    if(
+      nextReady<
+      plot.expiresAt
+    ){
+
+      plot.ready=
+        nextReady;
+
+
+      if(!silent){
+
+        showToast(
+          `${crop.icon} ${crop.fruit} ${amount}개 수확!${enchantText} 다시 자라는 중이야.`
+        );
+
+      }
+
+    }else{
+
+      page.plots[index]=
+        null;
+
+
+      if(!silent){
+
+        showToast(
+          `${crop.icon} ${crop.fruit} ${amount}개 수확!${enchantText} 수확 기간이 끝났어.`
+        );
+
+      }
+
+    }
+
+  }
+
+
+  else{
+
+    page.plots[index]=
+      null;
+
+
+    if(!silent){
+
+      showToast(
+        `${crop.icon} ${crop.fruit} ${amount}개 수확!${enchantText}`
+      );
+
+    }
+
+  }
+
+
+  saveGame();
+
+
+  return true;
+
+}
+
+
+function manualHarvest(index){
+
+  const page=
+    getCurrentPage();
+
+
+  const plot=
+    page.plots[index];
+
+
+  if(!plot){
+
+    return;
+
+  }
+
+
+  if(
+    isExpired(plot)
+  ){
+
+    harvestCrop(
+      page,
+      index,
+      false
+    );
+
+
+    renderAll();
+
+    return;
+
+  }
+
+
+  if(
+    !isReadyForHarvest(plot)
+  ){
+
+    showToast(
+      "아직 자라는 중이야!"
+    );
+
+    return;
+
+  }
+
+
+  harvestCrop(
+    page,
+    index,
+    false
+  );
+
+
+  renderAll();
+
+}
+
+
+/* =========================================================
+   뿌리뽑기
+========================================================= */
+
+function canUproot(plot){
+
+  if(!plot){
+
+    return false;
+
+  }
+
+
+  const crop=
+    CROPS[plot.id];
+
+
+  if(
+    !crop ||
+    crop.repeatType!==
+    "permanent"
+  ){
+
+    return false;
+
+  }
+
+
+  /* 뿌리내림 전에도 뽑을 수 있고,
+     뿌리내림 완료 후에도 뽑을 수 있다.
+     단, 완료 후에는 1,000원이 든다. */
+  return true;
+
+}
+
+
+function isRooted(plot){
+
+  if(!plot){
+
+    return false;
+
+  }
+
+
+  return (
+    Date.now()-
+    plot.plantedAt
+  ) >=
+  10*60*1000;
+
+}
+
+
+function uprootPlot(
+  index
+){
+
+  const page=
+    getCurrentPage();
+
+
+  const plot=
+    page.plots[index];
+
+
+  if(
+    !canUproot(plot)
+  ){
+
+    showToast(
+      "이 작물은 지금 뿌리뽑을 수 없어."
+    );
+
+    return;
+
+  }
+
+
+  const rooted=
+    isRooted(plot);
+
+
+  if(
+    rooted &&
+    game.money<
+    UPROOT_COST
+  ){
+
+    showToast(
+      `뿌리내림이 완료된 나무는 ${money(UPROOT_COST)}원이 필요해!`
+    );
+
+    return;
+
+  }
+
+
+  const id=
+    plot.id;
+
+
+  /* 뿌리내림 전에는 무료,
+     뿌리내림 완료 후에는 1,000원.
+     어느 경우에도 씨앗은 돌려주지 않는다. */
+  if(rooted){
+
+    game.money-=
+      UPROOT_COST;
+
+  }
+
+
+  page.plots[index]=
+    null;
+
+
+  saveGame();
+
+  renderAll();
+
+
+  showToast(
+    rooted
+      ?
+        `🔄 ${CROPS[id].name}을(를) 뽑았어! -${money(UPROOT_COST)}원`
+      :
+        `🔄 ${CROPS[id].name}을(를) 뽑았어! (무료)`
+  );
+
+}
+
+
+/* =========================================================
+   판매
+========================================================= */
+
+function sellOne(id){
+
+  if(
+    game.harvest[id]<=0
+  ){
+
+    showToast(
+      "팔 작물이 없어!"
+    );
+
+    return;
+
+  }
+
+
+  game.harvest[id]--;
+
+  game.money+=
+    game.prices[id];
+
+
+  saveGame();
+
+  renderAll();
+
+
+  showToast(
+    `💰 ${CROPS[id].fruit} 1개 판매!`
+  );
+
+}
+
+
+function sellAll(
+  id,
+  silent=false
+){
+
+  const count=
+    game.harvest[id]||
+    0;
+
+
+  if(
+    count<=0
+  ){
+
+    return false;
+
+  }
+
+
+  const total=
+    count*
+    game.prices[id];
+
+
+  game.harvest[id]=
+    0;
+
+
+  game.money+=
+    total;
+
+
+  saveGame();
+
+
+  if(!silent){
+
+    showToast(
+      `💰 ${count}개 판매! +${money(total)}원`
+    );
+
+  }
+
+
+  return true;
+
+}
+
+
+function manualSellAll(id){
+
+  if(
+    !sellAll(
+      id,
+      false
+    )
+  ){
+
+    showToast(
+      "팔 작물이 없어!"
+    );
+
+    return;
+
+  }
+
+
+  renderAll();
+
+}
+
+
+/* =========================================================
+   페이지별 농장 가격
+========================================================= */
+
+function getNextPlotPrice(
+  page
+){
+
+  return page.plots.length*
+    100;
+
+}
+
+
+/* =========================================================
+   현재 페이지 농장 추가
+========================================================= */
+
+function addPlot(
+  silent=false,
+  page=getCurrentPage()
+){
+
+  const price=
+    getNextPlotPrice(
+      page
+    );
+
+
+  if(
+    game.money<
+    price
+  ){
+
+    if(!silent){
+
+      showToast(
+        `${money(price)}원이 필요해!`
+      );
+
+    }
+
+    return false;
+
+  }
+
+
+  game.money-=
+    price;
+
+
+  page.plots.push(
+    null
+  );
+
+
+  saveGame();
+
+
+  if(!silent){
+
+    showToast(
+      `🟫 농장 칸 추가! -${money(price)}원`
+    );
+
+  }
+
+
+  return true;
+
+}
+
+
+/* =========================================================
+   시장
+========================================================= */
+
+function updateMarket(
+  force=false
+){
+
+  const now=
+    Date.now();
+
+
+  if(
+    !force &&
+    now-
+    lastMarketUpdate<
+    MARKET_INTERVAL
+  ){
+
+    return false;
+
+  }
+
+
+  IDS.forEach(
+    id=>{
+
+      const crop=
+        CROPS[id];
+
+
+      const randomPrice=
+        Math.max(
+          .5,
+          Math.round(
+            crop.base*
+            (
+              .5+
+              Math.random()*1.2
+            )*
+            2
+          )/2
+        );
+
+
+      const price=
+        Math.min(
+          crop.maxPrice,
+          randomPrice
+        );
+
+
+      game.prices[id]=
+        price;
+
+
+      game.history[id].push(
+        price
+      );
+
+
+      if(
+        game.history[id].length>
+        25
+      ){
+
+        game.history[id].shift();
+
+      }
+
+    }
+  );
+
+
+  lastMarketUpdate=
+    now;
+
+
+  saveGame();
+
+
+  return true;
+
+}
+
+
+function forceMarket(){
+
+  updateMarket(true);
+
+  runAutoSell();
+
+  renderAll();
+
+
+  showToast(
+    "📈 시장 가격이 바뀌었어!"
+  );
+
+}
+
+
+/* =========================================================
+   자동 기능
+========================================================= */
+
+function toggleAuto(
+  type,
+  value
+){
+
+  const page=
+    getCurrentPage();
+
+
+  if(
+    type===
+    "plant"
+  ){
+
+    page.autoPlant=
+      value;
+
+  }
+
+
+  else if(
+    type===
+    "buyPlot"
+  ){
+
+    page.autoBuyPlots=
+      value;
+
+  }
+
+
+  else{
+
+    game.auto[type]=
+      value;
+
+  }
+
+
+  saveGame();
+
+  /* 자동 뽑기를 켜는 순간 바로 1회 실행 */
+  if(type==="buyBox" && value){
+    runAutoBuyBox(true);
+  }
+
+  renderAutoPanel();
+  renderGacha();
+
+}
+
+
+function setAutoSeed(
+  id
+){
+
+  const page=
+    getCurrentPage();
+
+
+  page.selectedSeedId=
+    id;
+
+
+  saveGame();
+
+
+  renderAutoPanel();
+
+}
+
+
+function setReserve(
+  value
+){
+
+  game.auto.buyBoxReserve=
+    Math.max(
+      0,
+      Number(value)||0
+    );
+
+
+  saveGame();
+
+}
+
+
+function setSellTarget(
+  id,
+  value
+){
+
+  let n=
+    Number(value);
+
+
+  if(
+    !Number.isFinite(n)
+  ){
+
+    n=
+      CROPS[id].base;
+
+  }
+
+
+  game.auto.targets[id]=
+    Math.max(
+      0,
+      n
+    );
+
+
+  saveGame();
+
+}
+
+
+/* =========================================================
+   자동 수확 구입
+========================================================= */
+
+function buyAutoHarvest(){
+
+  if(
+    game.auto.harvestOwned
+  ){
+
+    return;
+
+  }
+
+
+  if(
+    game.money<
+    AUTO_HARVEST_COST
+  ){
+
+    showToast(
+      `🪙 ${AUTO_HARVEST_COST}원이 필요해!`
+    );
+
+    return;
+
+  }
+
+
+  game.money-=
+    AUTO_HARVEST_COST;
+
+
+  game.auto.harvestOwned=
+    true;
+
+
+  game.auto.harvest=
+    true;
+
+
+  saveGame();
+
+
+  renderAll();
+
+  renderAutoPanel();
+
+
+  showToast(
+    "✅ 자동 수확 구입 완료!"
+  );
+
+}
+
+
+/* =========================================================
+   자동 판매 구입
+========================================================= */
+
+function buyAutoSell(){
+
+  if(
+    game.auto.sellOwned
+  ){
+
+    return;
+
+  }
+
+
+  if(
+    game.money<
+    AUTO_SELL_COST
+  ){
+
+    showToast(
+      `🪙 ${AUTO_SELL_COST}원이 필요해!`
+    );
+
+    return;
+
+  }
+
+
+  game.money-=
+    AUTO_SELL_COST;
+
+
+  game.auto.sellOwned=
+    true;
+
+
+  game.auto.sell=
+    true;
+
+
+  saveGame();
+
+
+  renderAll();
+
+  renderAutoPanel();
+
+
+  showToast(
+    "✅ 자동 판매 구입 완료!"
+  );
+
+}
+
+
+/* =========================================================
+   자동 씨앗
+========================================================= */
+
+function runAutoBuyBox(force=false){
+
+  if(!game || !game.auto || !game.auto.buyBox){
+    return false;
+  }
+
+  const now=Date.now();
+
+  if(!force && now-lastAutoBoxRun<AUTO_BOX_INTERVAL){
+    return false;
+  }
+
+  const info=getCurrentSeedBox();
+  const boxCost=Math.max(0,Number(info?.cost)||0);
+  const reserve=Math.max(0,Number(game.auto.buyBoxReserve)||0);
+
+  /* 남겨둘 금액을 지키면서 1회 뽑기 */
+  if(boxCost<=0 || game.money-boxCost<reserve){
+    return false;
+  }
+
+  lastAutoBoxRun=now;
+
+  const changed=openBox(true);
+
+  if(changed){
+    const lastId=game.boxLastResult;
+    if(lastId && CROPS[lastId]){
+      showToast(`🤖 자동 뽑기: ${CROPS[lastId].icon} ${CROPS[lastId].name} 씨앗 획득!`);
+    }
+    renderGacha();
+  }
+
+  return changed;
+
+}
+
+
+/* =========================================================
+   페이지별 자동 땅 구입
+========================================================= */
+
+function runAutoBuyPlot(
+  page
+){
+
+  if(
+    !page.autoBuyPlots
+  ){
+
+    return false;
+
+  }
+
+
+  if(
+    !page.autoPlant
+  ){
+
+    return false;
+
+  }
+
+
+  if(
+    page.plots.some(
+      p=>!p
+    )
+  ){
+
+    return false;
+
+  }
+
+
+  return addPlot(
+    true,
+    page
+  );
+
+}
+
+
+/* =========================================================
+   모든 페이지 자동 심기
+========================================================= */
+
+function runAutoPlant(){
+  let changed=false;
+  const allPageGroups=[game.pages,game.fruitPages||[]];
+  for(const pages of allPageGroups){
+    for(const page of pages){
+      if(!page.autoPlant) continue;
+      const areaIds=pages===game.fruitPages ? FARM_AREA_CONFIG.fruit.ids : FARM_AREA_CONFIG.food.ids;
+      const id=areaIds.includes(page.selectedSeedId) && CROPS[page.selectedSeedId] ? page.selectedSeedId : areaIds.find(x=>CROPS[x]);
+      if(!id || game.seeds[id]<=0) continue;
+      while(game.seeds[id]>0){
+        let index=page.plots.findIndex(p=>!p);
+        if(index<0){
+          if(!runAutoBuyPlot(page)) break;
+          index=page.plots.findIndex(p=>!p);
+          if(index<0) break;
+        }
+        if(plantCrop(id,page,index,true)){
+          changed=true;
+        }else{
+          break;
+        }
+      }
+    }
+  }
+  return changed;
+}
+
+
+/* =========================================================
+   모든 페이지 자동 수확
+========================================================= */
+
+function runAutoHarvest(){
+  if(!game.auto.harvestOwned || !game.auto.harvest) return false;
+  let changed=false;
+  const allPageGroups=[game.pages,game.fruitPages||[]];
+  for(const pages of allPageGroups){
+    for(const page of pages){
+      for(let i=0;i<page.plots.length;i++) {
+        const plot=page.plots[i];
+        if(!plot) continue;
+        if(isExpired(plot) || isReadyForHarvest(plot)){
+          if(harvestCrop(page,i,true)) changed=true;
+        }
+      }
+    }
+  }
+  return changed;
+}
+
+
+/* =========================================================
+   자동 판매
+========================================================= */
+
+function runAutoSell(){
+
+  if(
+    !game.auto.sellOwned ||
+    !game.auto.sell
+  ){
+
+    return false;
+
+  }
+
+
+  let changed=
+    false;
+
+
+  IDS.forEach(
+    id=>{
+
+      const count=
+        game.harvest[id]||
+        0;
+
+
+      const target=
+        Number(
+          game.auto.targets[id]
+        )||0;
+
+
+      const price=
+        game.prices[id];
+
+
+      if(
+        count>0 &&
+        price>=target
+      ){
+
+        if(
+          sellAll(
+            id,
+            true
+          )
+        ){
+
+          changed=
+            true;
+
+        }
+
+      }
+
+    }
+  );
+
+
+  return changed;
+
+}
+
+
+/* =========================================================
+   전체 자동
+========================================================= */
+
+function runAllAuto(){
+
+  let changed=
+    false;
+
+
+  if(
+    runAutoBuyBox()
+  ){
+
+    changed=
+      true;
+
+  }
+
+
+  if(
+    runAutoPlant()
+  ){
+
+    changed=
+      true;
+
+  }
+
+
+  if(
+    runAutoHarvest()
+  ){
+
+    changed=
+      true;
+
+  }
+
+
+  if(
+    runAutoSell()
+  ){
+
+    changed=
+      true;
+
+  }
+
+
+  if(changed){
+
+    saveGame();
+
+  }
+
+
+  return changed;
+
+}
+
+
+/* =========================================================
+   씨앗 렌더
+========================================================= */
+
+function renderSeeds(){
+
+  const box=
+    document.getElementById(
+      "seedGrid"
+    );
+
+  if(!box) return;
+
+  let html="";
+
+  getCurrentFarmCropIds().forEach(id=>{
+
+    const c=CROPS[id];
+    const count=Math.max(0,Number(game.seeds[id])||0);
+
+    let lifeText;
+    if(c.repeatType==="permanent"){
+      lifeText="🌳 계속 반복 수확";
+    }else if(c.repeatType==="timed"){
+      lifeText="⏱️ 10분 동안 반복 수확";
+    }else{
+      lifeText="🧺 한 번 수확";
+    }
+
+    html+=`
+      <div class="seed-card">
+        <div class="seed-head">
+          <div>
+            <div class="seed-name">
+              ${c.seedIcon}
+              ${c.name}
+            </div>
+            <div class="rarity ${c.cls}">
+              ${c.rarity}
+            </div>
+          </div>
+          <div class="seed-count">${count}</div>
+        </div>
+        <div class="seed-info">
+          성장: ${c.grow}초<br>
+          수확량: ${c.yieldMin}~${c.yieldMax}개<br>
+          ${lifeText}
+        </div>
+        <button
+          class="seed-btn"
+          onclick="manualPlant('${id}')"
+          ${count<=0 ? "disabled" : ""}
+        >
+          🌱 빈 칸에 심기
+        </button>
+      </div>
+    `;
+
+    const levels=game.fusion?.items?.[id]||{};
+    Object.keys(levels)
+      .map(Number)
+      .filter(level=>Number.isFinite(level)&&level>=1&&levels[level]>0)
+      .sort((a,b)=>a-b)
+      .forEach(level=>{
+        const enchantedCount=Math.max(0,Number(levels[level])||0);
+        const multiplier=level+1;
+        html+=`
+          <div class="seed-card" style="border-color:#cdb8ef;background:#fbf8ff">
+            <div class="seed-head">
+              <div>
+                <div class="seed-name">
+                  ✨ ${c.name} · 인챈트 ${level}단계
+                </div>
+                <div class="rarity" style="color:#8a5ac7">
+                  수확량 ${multiplier}배
+                </div>
+              </div>
+              <div class="seed-count" style="background:#8a5ac7">${enchantedCount}</div>
+            </div>
+            <div class="seed-info">
+              ✨ 인챈트 ${level}단계 씨앗<br>
+              심으면 ${c.fruit}를 기본 수확량의 <b>${multiplier}배</b> 획득<br>
+              퓨즈하면 → 인챈트 ${level+1}단계
+            </div>
+            <button
+              class="seed-btn"
+              style="background:#8a5ac7"
+              onclick="manualPlantEnchanted('${id}',${level})"
+              ${enchantedCount<=0 ? "disabled" : ""}
+            >
+              ✨ 인챈트 씨앗 심기
+            </button>
+          </div>
+        `;
+      });
+  });
+
+  box.innerHTML=html;
+
+}
+
+
+
+/* =========================================================
+   농장 탭
+========================================================= */
+
+function renderFarmTabs(){
+
+  const box=
+    document.getElementById(
+      "farmTabs"
+    );
+
+
+  box.innerHTML=
+    game.pages.map(
+      (page,index)=>{
+
+        const used=
+          page.plots.filter(
+            Boolean
+          ).length;
+
+
+        return `
+
+          <button
+            class="
+              farm-tab
+              ${
+                index===
+                activePageIndex
+                  ?
+                    "active"
+                  :
+                    ""
+              }
+            "
+            onclick="
+              switchPage(${index})
+            "
+            ondblclick="
+              renamePage(${index})
+            "
+            title="
+              한 번 클릭: 페이지 이동 /
+              더블 클릭: 이름 변경
+            "
+          >
+
+            ${escapeHtml(
+              page.name
+            )}
+
+            ·
+            ${used}/${page.plots.length}
+
+          </button>
+
+        `;
+
+      }
+    ).join("");
+
+
+  box.innerHTML+=`
+
+    <button
+      class="farm-tab-add"
+      onclick="addPage()"
+    >
+
+      ＋ 페이지 추가
+
+    </button>
+
+  `;
+
+}
+
+
+/* =========================================================
+   농장 렌더
+========================================================= */
+
+function renderPlots(){
+
+  const page=
+    getCurrentPage();
+
+
+  if(!page){
+
+    return;
+
+  }
+
+
+  const box=
+    document.getElementById(
+      "plots"
+    );
+
+
+  box.innerHTML=
+    page.plots.map(
+      (plot,index)=>{
+
+        if(!plot){
+
+          return `
+
+            <div class="plot empty">
+
+              <div class="plot-no">
+                칸 ${index+1}
+              </div>
+
+              <div class="plot-icon">
+                🟫
+              </div>
+
+              <div class="plot-name">
+                빈 칸
+              </div>
+
+            </div>
+
+          `;
+
+        }
+
+
+        const c=
+          CROPS[plot.id];
+
+
+        const expired=
+          isExpired(plot);
+
+
+        const ready=
+          isReadyForHarvest(
+            plot
+          );
+
+
+        const remaining=
+          Math.max(
+            0,
+            plot.ready-
+            Date.now()
+          );
+
+
+        const progress=
+          ready
+            ?
+              100
+            :
+              Math.max(
+                0,
+                Math.min(
+                  100,
+                  (
+                    1-
+                    remaining/
+                    (
+                      c.grow*
+                      1000
+                    )
+                  )*100
+                )
+              );
+
+
+        let lifetimeText;
+
+
+        if(
+          c.repeatType===
+          "permanent"
+        ){
+
+          const left=
+            Math.max(
+              0,
+              10*60*1000-
+              (
+                Date.now()-
+                plot.plantedAt
+              )
+            );
+
+
+          lifetimeText=
+            left>0
+              ?
+                `🌳 뿌리내림까지 ${Math.ceil(left/1000)}초`
+              :
+                "🌳 뿌리내림 완료";
+
+        }
+
+        else if(
+          c.repeatType===
+          "timed"
+        ){
+
+          const left=
+            Math.max(
+              0,
+              plot.expiresAt-
+              Date.now()
+            );
+
+
+          lifetimeText=
+            left>0
+              ?
+                `⏱️ 반복 수확 ${Math.ceil(left/60000)}분 남음`
+              :
+                "⏱️ 수확 기간 종료";
+
+        }
+
+        else{
+
+          lifetimeText=
+            "🧺 한 번 수확하면 사라짐";
+
+        }
+
+
+        return `
+
+          <div class="plot">
+
+            <div class="plot-no">
+              칸 ${index+1}
+            </div>
+
+            <div class="plot-icon">
+              ${c.icon}
+            </div>
+
+            <div class="plot-name">
+              ${
+                Math.max(0,Number(plot.enchantLevel)||0)>0
+                  ? `✨ ${c.name} · 인챈트 ${Number(plot.enchantLevel)}단계`
+                  : c.name
+              }
+            </div>
+
+            <div class="plot-time">
+
+              ${
+                expired
+                  ?
+                    "수확 기간 종료"
+                  :
+                  ready
+                    ?
+                      "✨ 수확 가능"
+                    :
+                      `${Math.ceil(
+                        remaining/1000
+                      )}초 남음`
+              }
+
+            </div>
+
+
+            <div class="plot-note">
+
+              ${
+                Math.max(0,Number(plot.enchantLevel)||0)>0
+                  ? `✨ 수확량 ${Number(plot.enchantLevel)+1}배`
+                  :
+                c.repeatType===
+                "permanent"
+                  ?
+                    "🌳 계속 다시 열매가 열려"
+                  :
+                  c.repeatType===
+                  "timed"
+                    ?
+                      "🍅 10분 동안 반복 수확"
+                    :
+                      "🌾 수확하면 작물이 끝나"
+              }
+
+            </div>
+
+
+            <div class="plot-life">
+
+              ${lifetimeText}
+
+            </div>
+
+
+            ${
+              expired
+                ?
+                  ""
+                :
+                ready
+                  ?
+
+                    `
+
+                      <button
+                        class="ready-btn"
+                        onclick="
+                          manualHarvest(${index})
+                        "
+                      >
+
+                        🧺 수확하기
+
+                      </button>
+
+                    `
+
+                  :
+
+                    `
+
+                      <div class="progress">
+
+                        <div
+                          style="
+                            width:${progress}%
+                          "
+                        ></div>
+
+                      </div>
+
+                    `
+            }
+
+
+            ${
+              canUproot(plot)
+                ?
+
+                  `
+
+                    <button
+                      class="uproot-btn"
+                      onclick="
+                        uprootPlot(${index})
+                      "
+                    >
+
+                      ${
+                        isRooted(plot)
+                          ?
+                            "🔄 뿌리뽑기 (1,000원)"
+                          :
+                            "🔄 뿌리뽑기 (무료)"
+                      }
+
+                    </button>
+
+                  `
+
+                :
+
+                  ""
+
+            }
+
+          </div>
+
+        `;
+
+      }
+    ).join("");
+
+
+  const used=
+    page.plots.filter(
+      Boolean
+    ).length;
+
+
+  document.getElementById(
+    "farmInfo"
+  ).textContent=
+    `${page.name} · 농장 ${page.plots.length}칸 · 사용 중 ${used}칸 · 빈 칸 ${page.plots.length-used}칸`;
+
+
+  document.getElementById(
+    "plotTotal"
+  ).textContent=
+    page.plots.length;
+
+
+  document.getElementById(
+    "nextPlotPrice"
+  ).textContent=
+    money(
+      getNextPlotPrice(page)
+    );
+
+
+  document.getElementById(
+    "pagePriceNote"
+  ).textContent=
+    `현재 페이지: ${page.name} · 페이지 추가 가격: ${money(getNextPagePrice())}원`;
+
+}
+
+
+/* =========================================================
+   작물 도감
+========================================================= */
+
+function renderCropBook(){
+
+  const box=
+    document.getElementById(
+      "cropBook"
+    );
+
+  if(!box){
+    return;
+  }
+
+  const discovered=
+    getCurrentFarmCropIds().filter(
+      id=>!!game.collection[id]
+    ).length;
+
+  const progress=
+    document.getElementById(
+      "cropBookProgress"
+    );
+
+  if(progress){
+    progress.textContent=
+      `📚 도감 ${discovered} / ${getCurrentFarmCropIds().length}종 발견`;
+  }
+
+  box.innerHTML=
+    getCurrentFarmCropIds().map(
+      id=>{
+
+        const c=
+          CROPS[id];
+
+        const found=
+          !!game.collection[id];
+
+        if(!found){
+          return `
+            <div class="crop-book-card locked">
+              <div class="crop-book-locked">❓</div>
+              <div class="crop-book-name">???</div>
+              <div class="crop-book-rarity">미발견</div>
+              <div class="crop-book-detail">
+                이 작물을 처음 수확하면 도감에 등록돼.
+              </div>
+            </div>
+          `;
+        }
+
+        return `
+          <div class="crop-book-card">
+            <div class="crop-book-icon">${c.icon}</div>
+            <div class="crop-book-name">${c.name}</div>
+            <div class="crop-book-rarity">${c.rarity}</div>
+            <div class="crop-book-detail">
+              수확물: ${c.fruit}<br>
+              성장: ${c.grow}초<br>
+              수확량: ${c.yieldMin}~${c.yieldMax}개
+            </div>
+          </div>
+        `;
+      }
+    ).join("");
+
+}
+
+
+/* =========================================================
+   작물 설명
+========================================================= */
+
+function renderCropInfo(){
+
+  const box=
+    document.getElementById(
+      "cropInfo"
+    );
+
+
+  box.innerHTML=
+    getCurrentFarmCropIds().map(
+      id=>{
+
+        const c=
+          CROPS[id];
+
+
+        let typeText;
+
+
+        if(
+          c.repeatType===
+          "permanent"
+        ){
+
+          typeText=
+            `영구 반복 수확<br>
+             첫 성장 ${c.grow}초 · 재성장 ${c.regrow}초`;
+
+        }
+
+        else if(
+          c.repeatType===
+          "timed"
+        ){
+
+          typeText=
+            `10분 동안 반복 수확<br>
+             첫 성장 ${c.grow}초 · 재성장 ${c.regrow}초`;
+
+        }
+
+        else{
+
+          typeText=
+            `한 번 수확하면 사라짐<br>
+             성장 ${c.grow}초`;
+
+        }
+
+
+        return `
+
+          <div class="crop-info-card">
+
+            <div class="crop-info-head">
+
+              <div class="crop-info-name">
+
+                ${c.icon}
+                ${c.name}
+
+              </div>
+
+              <div
+                class="
+                  crop-info-rarity
+                  ${c.cls}
+                "
+              >
+
+                ${c.rarity}
+
+              </div>
+
+            </div>
+
+
+            <div class="crop-info-line">
+
+              🌱 ${typeText}
+
+              <br>
+
+              🧺 수확량:
+              ${c.yieldMin}
+              ~
+              ${c.yieldMax}개
+
+            </div>
+
+
+            <div class="crop-info-price">
+
+              현재 기본 가격:
+              ${money(c.base)}원
+
+              <br>
+
+              <span class="crop-info-max">
+
+                🔥 최고 가격:
+                ${money(c.maxPrice)}원
+
+              </span>
+
+            </div>
+
+          </div>
+
+        `;
+
+      }
+    ).join("");
+
+}
+
+
+/* =========================================================
+   시장
+========================================================= */
+
+function renderMarket(){
+
+  const visibleIds=getCurrentFarmCropIds();
+  if(!visibleIds.length) return;
+  if(!visibleIds.includes(selected)) selected=visibleIds[0];
+
+  const tabs=
+    document.getElementById(
+      "cropTabs"
+    );
+
+
+  tabs.innerHTML=
+    getCurrentFarmCropIds().map(
+      id=>`
+
+        <button
+          class="
+            crop-tab
+            ${selected===id?"active":""}
+          "
+          onclick="
+            selectCrop('${id}')
+          "
+        >
+
+          ${CROPS[id].icon}
+          ${CROPS[id].fruit}
+
+        </button>
+
+      `
+    ).join("");
+
+
+  const history=
+    game.history[selected];
+
+
+  const average=
+    history.reduce(
+      (a,b)=>
+        a+b,
+      0
+    )/
+    history.length;
+
+
+  const current=
+    game.prices[selected];
+
+
+  const high=
+    Math.max(
+      ...history
+    );
+
+
+  const low=
+    Math.min(
+      ...history
+    );
+
+
+  document.getElementById(
+    "graphStats"
+  ).innerHTML=`
+
+    <div class="gstat">
+
+      <div class="gstat-label">
+        현재
+      </div>
+
+      <div class="gstat-value">
+        ${money(current)} 🪙
+      </div>
+
+    </div>
+
+
+    <div class="gstat">
+
+      <div class="gstat-label">
+        평균
+      </div>
+
+      <div class="gstat-value">
+        ${money(average)} 🪙
+      </div>
+
+    </div>
+
+
+    <div class="gstat">
+
+      <div class="gstat-label">
+        최고
+      </div>
+
+      <div class="gstat-value">
+        ${money(high)} 🪙
+      </div>
+
+    </div>
+
+
+    <div class="gstat">
+
+      <div class="gstat-label">
+        최저
+      </div>
+
+      <div class="gstat-value">
+        ${money(low)} 🪙
+      </div>
+
+    </div>
+
+  `;
+
+
+  drawChart(
+    history,
+    average
+  );
+
+
+  document.getElementById(
+    "prices"
+  ).innerHTML=
+    getCurrentFarmCropIds().map(
+      id=>{
+
+        const crop=
+          CROPS[id];
+
+
+        const price=
+          game.prices[id];
+
+
+        const hist=
+          game.history[id];
+
+
+        const avg=
+          hist.reduce(
+            (a,b)=>
+              a+b,
+            0
+          )/
+          hist.length;
+
+
+        const own=
+          game.harvest[id];
+
+
+        const cls=
+          price>avg
+            ?
+              "up"
+            :
+            price<avg
+              ?
+                "down"
+              :
+                "same";
+
+
+        const arrow=
+          price>avg
+            ?
+              "▲"
+            :
+            price<avg
+              ?
+                "▼"
+              :
+                "→";
+
+
+        return `
+
+          <div class="price-card">
+
+            <div class="price-top">
+
+              <div>
+
+                <div class="price-name">
+
+                  ${crop.icon}
+                  ${crop.fruit}
+
+                </div>
+
+                <div class="price-sub">
+
+                  보유:
+                  ${own}개
+
+                  <br>
+
+                  <span class="${cls}">
+
+                    ${
+                      price>avg
+                        ?
+                          "평균보다 비쌈"
+                        :
+                        price<avg
+                          ?
+                            "평균보다 쌈"
+                          :
+                            "평균과 비슷"
+                    }
+
+                    · 평균
+                    ${money(avg)}원
+
+                  </span>
+
+                </div>
+
+              </div>
+
+
+              <div
+                class="
+                  price-num
+                  ${cls}
+                "
+              >
+
+                ${arrow}
+                ${money(price)}원
+
+              </div>
+
+            </div>
+
+
+            <button
+              class="sell1"
+              onclick="
+                sellOne('${id}')
+              "
+              ${own<=0?"disabled":""}
+            >
+
+              1개 판매
+
+            </button>
+
+
+            <button
+              class="sellall"
+              onclick="
+                manualSellAll('${id}')
+              "
+              ${own<=0?"disabled":""}
+            >
+
+              전부 판매
+
+            </button>
+
+          </div>
+
+        `;
+
+      }
+    ).join("");
+
+}
+
+
+/* =========================================================
+   그래프
+========================================================= */
+
+function drawChart(
+  history,
+  average
+){
+
+  const canvas=
+    document.getElementById(
+      "chart"
+    );
+
+
+  const ctx=
+    canvas.getContext(
+      "2d"
+    );
+
+
+  const w=
+    canvas.width;
+
+
+  const h=
+    canvas.height;
+
+
+  const p=
+    25;
+
+
+  ctx.clearRect(
+    0,
+    0,
+    w,
+    h
+  );
+
+
+  if(!history.length){
+
+    return;
+
+  }
+
+
+  const max=
+    Math.max(
+      ...history,
+      average
+    );
+
+
+  const min=
+    Math.min(
+      ...history,
+      average
+    );
+
+
+  const range=
+    Math.max(
+      1,
+      max-min
+    );
+
+
+  ctx.strokeStyle=
+    "#dfe8ed";
+
+  ctx.lineWidth=1;
+
+
+  for(
+    let i=0;
+    i<5;
+    i++
+  ){
+
+    const y=
+      p+
+      (
+        h-
+        p*2
+      )*
+      i/
+      4;
+
+
+    ctx.beginPath();
+
+    ctx.moveTo(
+      p,
+      y
+    );
+
+    ctx.lineTo(
+      w-p,
+      y
+    );
+
+    ctx.stroke();
+
+  }
+
+
+  const avgY=
+    h-
+    p-
+    (
+      average-min
+    )/
+    range*
+    (
+      h-
+      p*2
+    );
+
+
+  ctx.setLineDash([
+    6,
+    5
+  ]);
+
+  ctx.strokeStyle=
+    "#d58b16";
+
+  ctx.lineWidth=2;
+
+
+  ctx.beginPath();
+
+  ctx.moveTo(
+    p,
+    avgY
+  );
+
+  ctx.lineTo(
+    w-p,
+    avgY
+  );
+
+  ctx.stroke();
+
+
+  ctx.setLineDash([]);
+
+
+  ctx.strokeStyle=
+    "#2d6ccf";
+
+  ctx.lineWidth=3;
+
+
+  ctx.beginPath();
+
+
+  history.forEach(
+    (value,index)=>{
+
+      const x=
+        history.length===1
+          ?
+            w/2
+          :
+            p+
+            (
+              w-
+              p*2
+            )*
+            index/
+            (
+              history.length-1
+            );
+
+
+      const y=
+        h-
+        p-
+        (
+          value-min
+        )/
+        range*
+        (
+          h-
+          p*2
+        );
+
+
+      if(
+        index===0
+      ){
+
+        ctx.moveTo(
+          x,
+          y
+        );
+
+      }else{
+
+        ctx.lineTo(
+          x,
+          y
+        );
+
+      }
+
+    }
+  );
+
+
+  ctx.stroke();
+
+
+  ctx.fillStyle=
+    "#2d6ccf";
+
+
+  history.forEach(
+    (value,index)=>{
+
+      const x=
+        history.length===1
+          ?
+            w/2
+          :
+            p+
+            (
+              w-
+              p*2
+            )*
+            index/
+            (
+              history.length-1
+            );
+
+
+      const y=
+        h-
+        p-
+        (
+          value-min
+        )/
+        range*
+        (
+          h-
+          p*2
+        );
+
+
+      ctx.beginPath();
+
+      ctx.arc(
+        x,
+        y,
+        2.5,
+        0,
+        Math.PI*2
+      );
+
+      ctx.fill();
+
+    }
+  );
+
+}
+
+
+/* =========================================================
+   수확물
+========================================================= */
+
+function renderHarvest(){
+
+  const box=
+    document.getElementById(
+      "harvest"
+    );
+
+
+  const list=
+    getCurrentFarmCropIds().filter(
+      id=>
+        game.harvest[id]>0
+    );
+
+
+  if(!list.length){
+
+    box.innerHTML=`
+
+      <div
+        style="
+          grid-column:1/-1;
+          text-align:center;
+          padding:16px;
+          color:#777
+        "
+      >
+
+        아직 수확한 작물이 없어 🌱
+
+      </div>
+
+    `;
+
+
+    return;
+
+  }
+
+
+  box.innerHTML=
+    list.map(
+      id=>`
+
+        <div class="harvest-card">
+
+          <div class="harvest-head">
+
+            <span>
+
+              ${CROPS[id].icon}
+              ${CROPS[id].fruit}
+
+            </span>
+
+            <span class="qty">
+
+              ${game.harvest[id]}
+
+            </span>
+
+          </div>
+
+
+          <div
+            style="
+              margin-top:5px;
+              font-size:11px;
+              color:#666
+            "
+          >
+
+            현재 가격:
+            ${money(
+              game.prices[id]
+            )}원
+
+          </div>
+
+        </div>
+
+      `
+    ).join("");
+
+}
+
+
+/* =========================================================
+   자동 패널
+========================================================= */
+
+function renderAutoPanel(){
+
+  const page=
+    getCurrentPage();
+
+  const visibleIds=getCurrentFarmCropIds();
+  if(page && (!visibleIds.includes(page.selectedSeedId))){
+    page.selectedSeedId=FARM_AREA_CONFIG[currentFarmArea].defaultSeed;
+  }
+
+  const box=
+    document.getElementById(
+      "autoPanel"
+    );
+
+
+  box.innerHTML=`
+
+    <!-- 자동 심기 -->
+
+    <div class="auto-card">
+
+      <div class="auto-head">
+
+        <div class="auto-name">
+          🌱 자동 심기
+        </div>
+
+        <label class="switch">
+
+          <input
+            type="checkbox"
+            ${
+              page.autoPlant
+                ?
+                  "checked"
+                :
+                  ""
+            }
+            onchange="
+              toggleAuto(
+                'plant',
+                this.checked
+              )
+            "
+          >
+
+          켜기
+
+        </label>
+
+      </div>
+
+
+      <div class="auto-desc">
+
+        현재 페이지의 빈 농장 칸에
+        선택한 씨앗을 자동으로 심어.
+
+      </div>
+
+
+      <select
+        onchange="
+          setAutoSeed(
+            this.value
+          )
+        "
+      >
+
+        ${
+          getCurrentFarmCropIds().map(
+            id=>`
+
+              <option
+                value="${id}"
+                ${
+                  page.selectedSeedId===
+                  id
+                    ?
+                      "selected"
+                    :
+                      ""
+                }
+              >
+
+                ${CROPS[id].icon}
+                ${CROPS[id].name}
+
+              </option>
+
+            `
+          ).join("")
+        }
+
+      </select>
+
+    </div>
+
+
+    <!-- 자동 땅 -->
+
+    <div class="auto-card">
+
+      <div class="auto-head">
+
+        <div class="auto-name">
+          🟫 자동 땅 구입
+        </div>
+
+        <label class="switch">
+
+          <input
+            type="checkbox"
+            ${
+              page.autoBuyPlots
+                ?
+                  "checked"
+                :
+                  ""
+            }
+            onchange="
+              toggleAuto(
+                'buyPlot',
+                this.checked
+              )
+            "
+          >
+
+          켜기
+
+        </label>
+
+      </div>
+
+
+      <div class="auto-desc">
+
+        현재 페이지에 빈 칸이 없으면
+        그 페이지의 다음 땅 가격으로 자동 구입해.
+
+      </div>
+
+
+      <div
+        style="
+          font-size:11px;
+          font-weight:900
+        "
+      >
+
+        현재 페이지 다음 가격:
+        ${money(
+          getNextPlotPrice(page)
+        )}원
+
+      </div>
+
+    </div>
+
+
+    <!-- 자동 씨앗 -->
+
+    <div class="auto-card">
+
+      <div class="auto-head">
+
+        <div class="auto-name">
+          🎁 자동 씨앗 구입
+        </div>
+
+        <label class="switch">
+
+          <input
+            type="checkbox"
+            ${
+              game.auto.buyBox
+                ?
+                  "checked"
+                :
+                  ""
+            }
+            onchange="
+              toggleAuto(
+                'buyBox',
+                this.checked
+              )
+            "
+          >
+
+          켜기
+
+        </label>
+
+      </div>
+
+
+      <div class="auto-desc">
+
+        설정한 금액을 남겨두고
+        랜덤 씨앗 상자를 자동으로 구입해.
+
+      </div>
+
+
+      <label
+        style="
+          display:block;
+          font-size:11px;
+          font-weight:900
+        "
+      >
+
+        남겨둘 금액
+
+      </label>
+
+
+      <input
+        type="number"
+        min="0"
+        step="10"
+        value="${
+          game.auto.buyBoxReserve
+        }"
+        style="
+          width:100%;
+          margin-top:5px;
+          border:2px solid #cbd8c7;
+          border-radius:8px;
+          padding:7px
+        "
+        onchange="
+          setReserve(
+            this.value
+          )
+        "
+      >
+
+    </div>
+
+
+    <!-- 자동 수확 -->
+
+    <div class="auto-card">
+
+      <div class="auto-head">
+
+        <div class="auto-name">
+          🧺 자동 수확
+        </div>
+
+      </div>
+
+
+      <div class="auto-desc">
+
+        모든 농장 페이지에서
+        자란 작물을 자동으로 수확해.
+
+      </div>
+
+
+      ${
+        game.auto.harvestOwned
+
+          ?
+
+            `
+
+              <label class="switch">
+
+                <input
+                  type="checkbox"
+                  ${
+                    game.auto.harvest
+                      ?
+                        "checked"
+                      :
+                        ""
+                  }
+                  onchange="
+                    toggleAuto(
+                      'harvest',
+                      this.checked
+                    )
+                  "
+                >
+
+                자동 수확 켜기
+
+              </label>
+
+            `
+
+          :
+
+            `
+
+              <button
+                class="buy-btn"
+                onclick="
+                  buyAutoHarvest()
+                "
+              >
+
+                300원에 구입
+
+              </button>
+
+            `
+      }
+
+    </div>
+
+
+    <!-- 자동 판매 -->
+
+    <div class="auto-card">
+
+      <div class="auto-head">
+
+        <div class="auto-name">
+          💰 자동 판매
+        </div>
+
+      </div>
+
+
+      <div class="auto-desc">
+
+        현재 가격이 목표 가격 이상이면
+        해당 작물을 전부 판매해.
+
+      </div>
+
+
+      ${
+        game.auto.sellOwned
+
+          ?
+
+            `
+
+              <label class="switch">
+
+                <input
+                  type="checkbox"
+                  ${
+                    game.auto.sell
+                      ?
+                        "checked"
+                      :
+                        ""
+                  }
+                  onchange="
+                    toggleAuto(
+                      'sell',
+                      this.checked
+                    )
+                  "
+                >
+
+                자동 판매 켜기
+
+              </label>
+
+            `
+
+          :
+
+            `
+
+              <button
+                class="buy-btn"
+                onclick="
+                  buyAutoSell()
+                "
+              >
+
+                500원에 구입
+
+              </button>
+
+            `
+      }
+
+
+      <div
+        style="
+          margin-top:9px;
+          font-size:11px;
+          font-weight:900
+        "
+      >
+
+        작물별 목표 가격
+
+      </div>
+
+
+      ${
+        getCurrentFarmCropIds().map(
+          id=>`
+
+            <div class="target-wrap">
+
+              <span
+                style="
+                  font-size:11px;
+                  font-weight:900
+                "
+              >
+
+                ${CROPS[id].icon}
+                ${CROPS[id].fruit}
+
+              </span>
+
+
+              <div
+                style="
+                  display:flex;
+                  align-items:center;
+                  gap:5px;
+                  width:100%
+                "
+              >
+
+                <input
+                  type="number"
+                  min="0"
+                  step="0.5"
+                  value="${
+                    game.auto.targets[id]
+                  }"
+                  onchange="
+                    setSellTarget(
+                      '${id}',
+                      this.value
+                    )
+                  "
+                >
+
+                <span class="target-unit">
+                  원
+                </span>
+
+              </div>
+
+            </div>
+
+          `
+        ).join("")
+      }
+
+    </div>
+
+  `;
+
+}
+
+
+/* =========================================================
+   퓨즈 머신
+========================================================= */
+
+const FUSION_TIME=10000;
+
+let selectedFusionItem=null;
+
+function ensureFusionCrop(id){
+  if(!game.fusion.items[id]){
+    game.fusion.items[id]={};
+  }
+}
+
+function getFusionCount(id,enchantLevel){
+  ensureFusionCrop(id);
+  return Math.max(0,Number(game.fusion.items[id][enchantLevel])||0);
+}
+
+function addFusionItem(id,enchantLevel,count=1){
+  ensureFusionCrop(id);
+  const level=Math.max(1,Number(enchantLevel)||1);
+  game.fusion.items[id][level]=getFusionCount(id,level)+count;
+}
+
+function removeFusionItem(id,enchantLevel,count=1){
+  ensureFusionCrop(id);
+  const level=Math.max(1,Number(enchantLevel)||1);
+  const current=getFusionCount(id,level);
+  const next=Math.max(0,current-count);
+  if(next<=0){
+    delete game.fusion.items[id][level];
+  }else{
+    game.fusion.items[id][level]=next;
+  }
+}
+
+function fusionSeedLabel(id,enchantLevel=0){
+  const crop=CROPS[id];
+  const level=Math.max(0,Number(enchantLevel)||0);
+  if(!crop) return `${id} 씨앗`;
+  return level>0
+    ? `${crop.icon} ${crop.fruit} 인챈트 ${level}단계 씨앗`
+    : `${crop.icon} ${crop.fruit} 씨앗`;
+}
+
+function getFusionNextEnchantLevel(enchantLevel){
+  return Math.max(1,Number(enchantLevel)||0)+1;
+}
+
+function getEnchantMultiplier(enchantLevel){
+  return Math.max(1,Number(enchantLevel)||0)+1;
+}
+
+function findAutoFusionPair(){
+
+  if(!game || !game.fusion || !game.fusion.equipped){
+    return null;
+  }
+
+  /* 기본 씨앗부터 순서대로 확인하고,
+     기본 씨앗이 없으면 인챈트 단계가 낮은 것부터 차례대로 합성한다. */
+  for(const id of IDS){
+    if(!CROPS[id]) continue;
+
+    const baseCount=Math.max(0,Number(game.seeds[id])||0);
+    if(baseCount>=4){
+      return {id,enchantLevel:0};
+    }
+  }
+
+  for(const id of IDS){
+    if(!CROPS[id]) continue;
+
+    ensureFusionCrop(id);
+
+    const levels=Object.keys(game.fusion.items[id])
+      .map(Number)
+      .filter(level=>Number.isFinite(level)&&level>=1)
+      .sort((a,b)=>a-b);
+
+    for(const level of levels){
+      if(getFusionCount(id,level)>=4){
+        return {id,enchantLevel:level};
+      }
+    }
+  }
+
+  return null;
+}
+
+function startNextAutoFusion(){
+
+  if(!game || !game.fusion) return false;
+  if(!game.fusion.equipped) return false;
+  if(!game.fusion.autoPull) return false;
+  if(game.fusion.input || game.fusion.ready) return false;
+
+  const pair=findAutoFusionPair();
+  if(!pair){
+    return false;
+  }
+
+  return startFusion(
+    pair.id,
+    pair.enchantLevel,
+    true
+  );
+}
+
+function equipFusionMachine(){
+
+  if(!game.fusion.machineOwned){
+    game.fusion.machineOwned=true;
+  }
+
+  if(game.fusion.input || game.fusion.ready){
+    showToast("🧪 퓨즈 머신이 작동 중이야!");
+    return;
+  }
+
+  game.fusion.equipped=!game.fusion.equipped;
+
+  /* 장착하는 순간 자동 연속 퓨즈를 켜서
+     한 번 시작하면 사용자가 계속 클릭할 필요가 없게 한다. */
+  if(game.fusion.equipped){
+    game.fusion.autoPull=true;
+  }
+
+  saveGame();
+
+  if(game.fusion.equipped){
+    startNextAutoFusion();
+  }
+
+  renderFusionPanel();
+  renderSeeds();
+
+  showToast(
+    game.fusion.equipped
+      ? "✅ 퓨즈 머신 장착! 자동 연속 합성을 시작했어!"
+      : "📦 퓨즈 머신을 해제했어."
+  );
+}
+
+function selectFusionItem(id,enchantLevel){
+  selectedFusionItem={
+    id,
+    enchantLevel:Math.max(0,Number(enchantLevel)||0)
+  };
+  renderFusionPanel();
+}
+
+function startFusion(id,enchantLevel=0,silent=false){
+
+  const level=Math.max(0,Number(enchantLevel)||0);
+  const requiredCount=4;
+
+  if(!game.fusion.equipped){
+    showToast("🧪 먼저 퓨즈 머신을 장착해줘!");
+    return false;
+  }
+
+  if(game.fusion.input || game.fusion.ready){
+    showToast("⏳ 먼저 현재 퓨즈 작업을 끝내줘!");
+    return false;
+  }
+
+  if(!CROPS[id]) return false;
+
+  /* 현재 규칙: 같은 단계 씨앗 4개 → 다음 단계 씨앗 1개 */
+  if(level===0){
+    const count=Math.max(0,Number(game.seeds[id])||0);
+
+    if(count<requiredCount){
+      showToast(`${CROPS[id].icon} ${CROPS[id].fruit} 씨앗 ${requiredCount}개가 필요해!`);
+      return false;
+    }
+
+    game.seeds[id]=count-requiredCount;
+  }else{
+    const count=getFusionCount(id,level);
+
+    if(count<requiredCount){
+      showToast(`${fusionSeedLabel(id,level)} ${requiredCount}개가 필요해!`);
+      return false;
+    }
+
+    removeFusionItem(id,level,requiredCount);
+  }
+
+  game.fusion.input={
+    id,
+    enchantLevel:level,
+    requiredCount,
+    startedAt:Date.now(),
+    material:"seed"
+  };
+
+  saveGame();
+
+  if(!silent){
+    renderAll();
+
+    const nextLevel=getFusionNextEnchantLevel(level);
+    showToast(
+      `${fusionSeedLabel(id,level)} ${requiredCount}개를 합성 중이야! 10초 뒤 인챈트 ${nextLevel}단계 씨앗 1개가 돼.`
+    );
+  }
+
+  return true;
+}
+
+function collectFusionResult(silent=false){
+
+  const ready=game.fusion.ready;
+  if(!ready) return false;
+
+  const level=Math.max(1,Number(ready.enchantLevel)||1);
+  addFusionItem(ready.id,level,1);
+  game.fusion.ready=null;
+
+  saveGame();
+
+  if(!silent){
+    renderFusionPanel();
+    renderSeeds();
+
+    showToast(
+      `🎉 ${fusionSeedLabel(ready.id,level)} 완성! 수확량 ${getEnchantMultiplier(level)}배야.`
+    );
+  }
+
+  return true;
+}
+
+function updateFusionMachine(){
+
+  if(!game || !game.fusion) return false;
+
+  /* 자동 연속 합성: 결과를 받는 즉시 다음 4개짜리 재료를 찾아 다시 시작한다. */
+  if(!game.fusion.input){
+
+    if(game.fusion.ready){
+      if(game.fusion.autoPull){
+        const collected=collectFusionResult(true);
+        if(collected){
+          startNextAutoFusion();
+          renderFusionPanel();
+          return true;
+        }
+      }
+
+      return false;
+    }
+
+    if(game.fusion.autoPull){
+      const started=startNextAutoFusion();
+      if(started){
+        renderFusionPanel();
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  const input=game.fusion.input;
+  const elapsed=Date.now()-Number(input.startedAt||Date.now());
+
+  if(elapsed<FUSION_TIME) return false;
+
+  const nextLevel=getFusionNextEnchantLevel(input.enchantLevel);
+  const result={
+    id:input.id,
+    enchantLevel:nextLevel,
+    finishedAt:Date.now()
+  };
+
+  game.fusion.input=null;
+  game.fusion.ready=result;
+  saveGame();
+
+  if(game.fusion.autoPull){
+    collectFusionResult(true);
+
+    /* 방금 만든 씨앗을 포함해 다시 4개 묶음을 찾는다. */
+    startNextAutoFusion();
+
+    renderFusionPanel();
+    renderSeeds();
+    return true;
+  }
+
+  showToast(
+    `✨ ${fusionSeedLabel(result.id,result.enchantLevel)}가 완성됐어!`
+  );
+
+  return true;
+}
+
+function getMaxVisibleFusionStage(){
+
+  let maxLevel=0;
+
+  if(game && game.fusion && game.fusion.items){
+    Object.values(game.fusion.items).forEach(levels=>{
+      Object.keys(levels||{}).forEach(level=>{
+        const n=Number(level)||0;
+        if(n>maxLevel) maxLevel=n;
+      });
+    });
+  }
+
+  if(game && game.fusion){
+    [
+      game.fusion.input?.enchantLevel,
+      game.fusion.ready?.enchantLevel
+    ].forEach(v=>{
+      const n=Number(v)||0;
+      if(n>maxLevel) maxLevel=n;
+    });
+  }
+
+  /* 기본 10단계까지 보여주고,
+     더 높은 단계가 만들어지면 그 아래로 계속 단계가 늘어난다. */
+  return Math.max(10,maxLevel+3);
+}
+
+function getFusionStageSourceCount(id,stage){
+
+  const targetStage=Math.max(1,Number(stage)||1);
+  const sourceLevel=targetStage-1;
+
+  if(sourceLevel===0){
+    return Math.max(0,Number(game.seeds?.[id])||0);
+  }
+
+  return getFusionCount(id,sourceLevel);
+}
+
+function renderFusionPanel(){
+
+  const box=document.getElementById("fusionPanel");
+  if(!box || !game || !game.fusion) return;
+
+  const visibleIds=getCurrentFarmCropIds();
+  const selectedId =
+    selectedFusionItem && visibleIds.includes(selectedFusionItem.id)
+      ? selectedFusionItem.id
+      : (visibleIds[0]||"apple");
+
+  const maxStage=getMaxVisibleFusionStage();
+  let html="";
+
+  html+=`
+    <div class="fusion-head">
+      <div>
+        <div class="fusion-machine-title">🧪 인챈트 퓨즈 머신 1개</div>
+        <div class="fusion-machine-sub">같은 단계 씨앗 4개 → 다음 인챈트 씨앗 1개</div>
+      </div>
+
+      <button
+        class="fusion-equip-btn"
+        onclick="equipFusionMachine()"
+        ${game.fusion.input||game.fusion.ready ? "disabled" : ""}
+      >
+        ${game.fusion.equipped ? "🔓 장착 해제" : "🧲 장착하기"}
+      </button>
+    </div>
+  `;
+
+  html+=`
+    <div class="fusion-crop-select">
+      <span>작물 선택</span>
+      <select onchange="selectFusionMachineCrop(this.value)">
+        ${getCurrentFarmCropIds().map(id=>`
+          <option value="${id}" ${selectedId===id ? "selected" : ""}>
+            ${CROPS[id].icon} ${escapeHtml(CROPS[id].fruit)}
+          </option>
+        `).join("")}
+      </select>
+    </div>
+  `;
+
+  if(!game.fusion.equipped){
+    html+=`
+      <div class="fusion-status">
+        🔒 퓨즈 머신이 장착되지 않았어. <b>장착하기</b>를 누르면 자동 연속 합성이 시작돼.
+      </div>
+    `;
+  }
+  else if(game.fusion.input){
+    const input=game.fusion.input;
+    const remain=Math.max(0,FUSION_TIME-(Date.now()-Number(input.startedAt||Date.now())));
+    const progress=Math.max(0,Math.min(100,(1-remain/FUSION_TIME)*100));
+    const seconds=Math.ceil(remain/1000);
+    const next=getFusionNextEnchantLevel(input.enchantLevel);
+    const required=Math.max(4,Number(input.requiredCount)||4);
+
+    html+=`
+      <div class="fusion-status">
+        ⚙️ ${fusionSeedLabel(input.id,input.enchantLevel)} <b>${required}개</b>
+        → <b>인챈트 ${next}단계 씨앗 1개</b><br>
+        ⏳ ${seconds}초 남음 · 완성 시 <b>${getEnchantMultiplier(next)}배</b>
+        <div class="fusion-progress"><div style="width:${progress}%"></div></div>
+      </div>
+    `;
+  }
+  else if(game.fusion.ready){
+    const ready=game.fusion.ready;
+    html+=`
+      <div class="fusion-ready">
+        🎉 <b>${fusionSeedLabel(ready.id,ready.enchantLevel)}</b> 완성!<br>
+        수확량 ${getEnchantMultiplier(ready.enchantLevel)}배
+        <button class="fusion-action-btn" onclick="collectFusionResult()">
+          📥 결과 뽑기
+        </button>
+      </div>
+    `;
+  }
+  else{
+    html+=`
+      <div class="fusion-status">
+        ✅ 준비 완료! 아래 단계 중 재료 4개가 모인 단계부터 자동으로 합성할 수 있어.
+      </div>
+    `;
+  }
+
+  html+=`
+    <label class="fusion-auto">
+      <input
+        type="checkbox"
+        ${game.fusion.autoPull ? "checked" : ""}
+        onchange="toggleFusionAutoPull(this.checked)"
+      >
+      🤖 자동 연속 퓨즈
+      <span style="font-weight:700;color:#6d756d">4개가 모이면 10초마다 다음 단계로 계속 합성</span>
+    </label>
+  `;
+
+  html+=`
+    <div class="fusion-stage-title">
+      📜 인챈트 단계 목록
+    </div>
+    <div class="fusion-stage-list">
+  `;
+
+  for(let stage=1;stage<=maxStage;stage++){
+
+    const sourceLevel=stage-1;
+    const count=getFusionStageSourceCount(selectedId,stage);
+    const enough=count>=4;
+    const busy=!!game.fusion.input || !!game.fusion.ready;
+    const disabled=!(enough && game.fusion.equipped && !busy);
+    const outputMultiplier=getEnchantMultiplier(stage);
+    const sourceLabel=
+      sourceLevel===0
+        ? `${CROPS[selectedId].fruit} 기본 씨앗`
+        : `${CROPS[selectedId].fruit} 인챈트 ${sourceLevel}단계 씨앗`;
+
+    html+=`
+      <div class="fusion-stage-card ${enough ? "ready" : ""}">
+        <div class="fusion-stage-number">
+          ✨ ${stage}단계
+        </div>
+
+        <div class="fusion-stage-main">
+          <div class="fusion-stage-name">
+            ${CROPS[selectedId].icon} <b>${stage}단계 만들기</b>
+          </div>
+          <div class="fusion-stage-rule">
+            ${sourceLabel} <b>4개</b>
+            → 인챈트 ${stage}단계 씨앗 <b>1개</b>
+          </div>
+          <div class="fusion-stage-count">
+            현재 재료: <b>${count} / 4개</b> · 완성 후 수확량 <b>${outputMultiplier}배</b>
+          </div>
+        </div>
+
+        <button
+          class="fusion-stage-btn"
+          onclick="startFusion('${selectedId}',${sourceLevel})"
+          ${disabled ? "disabled" : ""}
+        >
+          ${enough ? `✨ ${stage}단계 만들기` : `🔒 ${count}/4`}
+        </button>
+      </div>
+    `;
+  }
+
+  html+=`</div>`;
+
+  html+=`
+    <div class="fusion-stage-more">
+      ⬇️ 아래로 스크롤할수록 더 높은 인챈트 단계가 계속 이어져.
+      현재 표시: <b>1~${maxStage}단계</b>
+    </div>
+  `;
+
+  box.innerHTML=html;
+}
+
+function selectFusionMachineCrop(id){
+
+  if(!CROPS[id]) return;
+
+  selectedFusionItem={
+    id,
+    enchantLevel:0
+  };
+
+  renderFusionPanel();
+}
+
+function toggleFusionAutoPull(value){
+  game.fusion.autoPull=!!value;
+  saveGame();
+
+  if(game.fusion.autoPull){
+    if(game.fusion.ready){
+      collectFusionResult(true);
+    }
+
+    startNextAutoFusion();
+  }
+
+  renderFusionPanel();
+  renderSeeds();
+}
+
+
+
+/* =========================================================
+   상단
+========================================================= */
+
+/* =========================================================
+   농장 레벨 목표
+========================================================= */
+
+const FARM_LEVEL_GOALS=[
+  0,
+  20,
+  50,
+  100,
+  180,
+  300,
+  500,
+  800,
+  1200,
+  1800,
+  2500,
+  3500,
+  5000,
+  7000,
+  10000
+];
+
+function getFarmLevelInfo(){
+
+  const xp=Math.max(0, Number(game.farmXP)||0);
+  let level=1;
+
+  for(let i=1;i<FARM_LEVEL_GOALS.length;i++){
+    if(xp>=FARM_LEVEL_GOALS[i]) level=i+1;
+    else break;
+  }
+
+  const maxLevel=FARM_LEVEL_GOALS.length;
+
+  if(level>=maxLevel){
+    return {level:maxLevel,xp,xpStart:FARM_LEVEL_GOALS[maxLevel-1],xpNext:null,progress:100,max:true};
+  }
+
+  const xpStart=FARM_LEVEL_GOALS[level-1];
+  const xpNext=FARM_LEVEL_GOALS[level];
+  const progress=Math.max(0,Math.min(100,((xp-xpStart)/(xpNext-xpStart))*100));
+
+  return {level,xp,xpStart,xpNext,progress,max:false};
+}
+
+function syncCropUnlocks(showToastOnUnlock=false){
+
+  if(!game){
+    return false;
+  }
+
+  const level=getFarmLevelInfo().level;
+  let changed=false;
+
+  Object.entries(LOCKED_CROPS).forEach(
+    ([id,entry])=>{
+
+      if(level < entry.unlockLevel || IDS.includes(id)){
+        return;
+      }
+
+      CROPS[id]=entry.crop;
+      IDS.push(id);
+
+      /* 새로 해금되는 작물은 바로 심어볼 수 있도록 씨앗 1개 지급 */
+      game.seeds[id]=Math.max(1, Number(game.seeds?.[id])||0);
+      game.harvest[id]=Number(game.harvest?.[id])||0;
+      game.collection[id]=!!game.collection?.[id];
+      game.prices[id]=Number(game.prices?.[id])||entry.crop.base;
+      game.history[id]=
+        Array.isArray(game.history?.[id])&&game.history[id].length
+          ? game.history[id].slice(-25)
+          : [game.prices[id]];
+      game.auto.targets[id]=
+        Number(game.auto.targets?.[id])||entry.crop.base;
+
+      changed=true;
+
+      if(showToastOnUnlock){
+        showToast(`🔓 농장 레벨 ${entry.unlockLevel}! ${entry.crop.icon} ${entry.crop.name} 해금!`);
+      }
+
+    }
+  );
+
+  if(changed){
+    saveGame();
+  }
+
+  return changed;
+}
+
+
+function addFarmXP(amount){
+
+  game.farmXP=Math.max(0,(Number(game.farmXP)||0)+amount);
+
+  syncCropUnlocks(true);
+}
+
+function renderFarmLevel(){
+
+  const info=getFarmLevelInfo();
+  const text=document.getElementById("farmLevelText");
+  const xpText=document.getElementById("farmLevelXP");
+  const bar=document.getElementById("farmLevelBar");
+  const goal=document.getElementById("farmLevelGoal");
+
+  if(!text||!xpText||!bar||!goal) return;
+
+  text.textContent=`🌱 농장 레벨 ${info.level}`;
+
+  if(info.max){
+    xpText.textContent=`${info.xp} XP · MAX`;
+    bar.style.width="100%";
+    goal.textContent="🏆 농장 레벨 최고 단계 달성!";
+    return;
+  }
+
+  xpText.textContent=`${info.xp-info.xpStart} / ${info.xpNext-info.xpStart} XP`;
+  bar.style.width=`${info.progress}%`;
+  if(info.level===1){
+    goal.textContent=`🎯 다음 목표: 농장 레벨 2 · ${info.xpNext} XP · 🥕 당근 해금`;
+  }else{
+    goal.textContent=`🎯 다음 목표: 농장 레벨 ${info.level+1} · ${info.xpNext} XP`;
+  }
+}
+
+
+function renderStats(){
+
+  if(game && typeof game.farmXP!=="number"){
+    game.farmXP=0;
+  }
+
+  renderFarmLevel();
+
+  document.getElementById(
+    "money"
+  ).textContent=
+    money(
+      game.money
+    );
+
+  document.getElementById(
+    "moneyCorner"
+  ).textContent=
+    money(
+      game.money
+    );
+
+
+  const baseSeedTotal=IDS.reduce(
+    (sum,id)=>
+      sum+Math.max(0,Number(game.seeds[id])||0),
+    0
+  );
+
+  const enchantedSeedTotal=IDS.reduce(
+    (sum,id)=>{
+      const levels=game.fusion?.items?.[id]||{};
+      return sum+Object.values(levels).reduce(
+        (a,v)=>a+Math.max(0,Number(v)||0),
+        0
+      );
+    },
+    0
+  );
+
+  document.getElementById(
+    "seedTotal"
+  ).textContent=
+    baseSeedTotal+enchantedSeedTotal;
+
+
+  const page=
+    getCurrentPage();
+
+
+  document.getElementById(
+    "plotTotal"
+  ).textContent=
+    page
+      ?
+        page.plots.length
+      :
+        0;
+
+
+  const remain=
+    Math.max(
+      0,
+      MARKET_INTERVAL-
+      (
+        Date.now()-
+        lastMarketUpdate
+      )
+    );
+
+
+  document.getElementById(
+    "marketTimer"
+  ).textContent=
+    Math.ceil(
+      remain/
+      1000
+    );
+
+}
+
+
+/* =========================================================
+   숲농장 / 나무 부업
+========================================================= */
+
+const FOREST_SLOT_BASE_PRICE=100;
+
+function getNextForestSlotPrice(){
+  return game && game.forestFarm
+    ? Math.max(1,game.forestFarm.slots.length)*FOREST_SLOT_BASE_PRICE
+    : FOREST_SLOT_BASE_PRICE;
+}
+
+function addForestSlot(){
+  if(!game || !game.forestFarm) return;
+
+  const price=getNextForestSlotPrice();
+
+  if(game.money<price){
+    showToast(`숲 칸을 늘리려면 ${money(price)}원이 필요해!`);
+    return;
+  }
+
+  game.money-=price;
+  game.forestFarm.slots.push(null);
+  saveGame();
+  renderForestFarm();
+  renderStats();
+
+  showToast(`🌳 숲 칸 1개 추가! -${money(price)}원`);
+}
+
+
+const FOREST_TREES={
+  oak:{
+    name:"참나무",
+    icon:"🌳",
+    grow:25,
+    woodMin:2,
+    woodMax:4,
+    woodPrice:28,
+    saplingPrice:80
+  },
+  pine:{
+    name:"소나무",
+    icon:"🌲",
+    grow:35,
+    woodMin:3,
+    woodMax:5,
+    woodPrice:34,
+    saplingPrice:100
+  },
+  apple:{
+    name:"사과나무",
+    icon:"🍎",
+    grow:18,
+    woodMin:2,
+    woodMax:3,
+    woodPrice:42,
+    saplingPrice:120
+  }
+};
+
+function forestTree(id){
+  return FOREST_TREES[id]||null;
+}
+
+function getForestWoodTotal(){
+  return Object.values(game.forestFarm.wood).reduce((sum,n)=>sum+(Number(n)||0),0);
+}
+
+function getForestSaplingTotal(){
+  return Object.values(game.forestFarm.saplings).reduce((sum,n)=>sum+(Number(n)||0),0);
+}
+
+function plantForestTree(id,slotIndex){
+  const tree=forestTree(id);
+  const slots=game.forestFarm.slots;
+  if(!tree) return;
+  if(slots[slotIndex]){
+    showToast("이 숲 칸에는 이미 나무가 있어!");
+    return;
+  }
+  if((Number(game.forestFarm.saplings[id])||0)<=0){
+    if(game.money<tree.saplingPrice){
+      showToast(`${tree.name} 묘목을 살 ${money(tree.saplingPrice)}원이 필요해!`);
+      return;
+    }
+    game.money-=tree.saplingPrice;
+  }else{
+    game.forestFarm.saplings[id]--;
+  }
+  const now=Date.now();
+  slots[slotIndex]={id,plantedAt:now,readyAt:now+tree.grow*1000};
+  saveGame();
+  renderForestFarm();
+  renderStats();
+  showToast(`${tree.icon} ${tree.name}을(를) 심었어!`);
+}
+
+function harvestForestTree(slotIndex){
+  const slot=game.forestFarm.slots[slotIndex];
+  if(!slot) return;
+  const tree=forestTree(slot.id);
+  if(Date.now()<slot.readyAt){
+    showToast("아직 나무가 안 자랐어!");
+    return;
+  }
+  const amount=Math.floor(Math.random()*(tree.woodMax-tree.woodMin+1))+tree.woodMin;
+  game.forestFarm.wood[slot.id]+=amount;
+  const now=Date.now();
+  slot.plantedAt=now;
+  slot.readyAt=now+tree.grow*1000;
+  saveGame();
+  renderForestFarm();
+  showToast(`🪵 ${tree.name} 목재 ${amount}개를 얻었어! 다시 자라는 중이야.`);
+}
+
+function sellForestWood(id){
+  const tree=forestTree(id);
+  const count=Math.max(0,Number(game.forestFarm.wood[id])||0);
+  if(!tree || count<=0){
+    showToast("팔 목재가 없어!");
+    return;
+  }
+  const total=count*tree.woodPrice;
+  game.forestFarm.wood[id]=0;
+  game.money+=total;
+  saveGame();
+  renderForestFarm();
+  renderStats();
+  showToast(`💰 ${tree.name} 목재 ${count}개 판매! +${money(total)}원`);
+}
+
+function buyForestSapling(id){
+  const tree=forestTree(id);
+  if(!tree) return;
+  if(game.money<tree.saplingPrice){
+    showToast(`${money(tree.saplingPrice)}원이 필요해!`);
+    return;
+  }
+  game.money-=tree.saplingPrice;
+  game.forestFarm.saplings[id]++;
+  saveGame();
+  renderForestFarm();
+  renderStats();
+  showToast(`${tree.icon} ${tree.name} 묘목 1개 구입!`);
+}
+
+function toggleForestAuto(type,value){
+  if(!game || !game.forestFarm || !game.forestFarm.auto) return;
+  if(!(type in game.forestFarm.auto)) return;
+  game.forestFarm.auto[type]=!!value;
+  saveGame();
+  renderForestFarm();
+}
+
+function setForestAutoTree(id){
+  if(!FOREST_TREES[id]) return;
+  game.forestFarm.auto.selectedTree=id;
+  saveGame();
+  renderForestFarm();
+}
+
+function autoBuyForestSapling(id){
+  const tree=forestTree(id);
+  if(!tree) return false;
+  if((Number(game.forestFarm.saplings[id])||0)>0) return true;
+  if(game.money<tree.saplingPrice) return false;
+  game.money-=tree.saplingPrice;
+  game.forestFarm.saplings[id]++;
+  return true;
+}
+
+function runForestAuto(){
+  if(!game || !game.forestFarm || !game.forestFarm.auto) return false;
+
+  const auto=game.forestFarm.auto;
+  const selectedId=auto.selectedTree;
+  const tree=forestTree(selectedId);
+  if(!tree) return false;
+
+  let changed=false;
+
+  /* 자동 수확 */
+  if(auto.harvest){
+    game.forestFarm.slots.forEach((slot,index)=>{
+      if(!slot) return;
+      if(Date.now()>=slot.readyAt){
+        const t=forestTree(slot.id);
+        const amount=Math.floor(Math.random()*(t.woodMax-t.woodMin+1))+t.woodMin;
+        game.forestFarm.wood[slot.id]+=amount;
+        const now=Date.now();
+        slot.plantedAt=now;
+        slot.readyAt=now+t.grow*1000;
+        changed=true;
+      }
+    });
+  }
+
+  /* 자동 판매 */
+  if(auto.sell){
+    Object.keys(FOREST_TREES).forEach(id=>{
+      const count=Math.max(0,Number(game.forestFarm.wood[id])||0);
+      if(count>0){
+        game.money += count*FOREST_TREES[id].woodPrice;
+        game.forestFarm.wood[id]=0;
+        changed=true;
+      }
+    });
+  }
+
+  /* 자동 숲 칸 구입 */
+  if(auto.buySlots){
+    while(game.forestFarm.slots.every(Boolean)){
+      const price=getNextForestSlotPrice();
+      if(game.money<price) break;
+      game.money-=price;
+      game.forestFarm.slots.push(null);
+      changed=true;
+      /* 한 번의 루프에서 무한 지출되지 않게 1칸까지만 */
+      break;
+    }
+  }
+
+  /* 자동 묘목 구매 */
+  if(auto.buySaplings && (auto.plant || game.forestFarm.slots.some(slot=>!slot))){
+    if((Number(game.forestFarm.saplings[selectedId])||0)<=0){
+      if(autoBuyForestSapling(selectedId)){
+        changed=true;
+      }
+    }
+  }
+
+  /* 자동 심기 */
+  if(auto.plant){
+    let planted=false;
+    while(true){
+      const empty=game.forestFarm.slots.findIndex(slot=>!slot);
+      if(empty<0) break;
+
+      if((Number(game.forestFarm.saplings[selectedId])||0)<=0){
+        if(!auto.buySaplings) break;
+        if(!autoBuyForestSapling(selectedId)) break;
+      }
+
+      game.forestFarm.saplings[selectedId]--;
+      const now=Date.now();
+      game.forestFarm.slots[empty]={
+        id:selectedId,
+        plantedAt:now,
+        readyAt:now+tree.grow*1000
+      };
+      changed=true;
+      planted=true;
+    }
+  }
+
+  if(changed){
+    saveGame();
+    renderForestFarm();
+    renderStats();
+  }
+
+  return changed;
+}
+
+function syncForestAutoControls(){
+  if(!game?.forestFarm?.auto) return;
+  const a=game.forestFarm.auto;
+  const ids={
+    plant:"forestAutoPlant",
+    buySaplings:"forestAutoBuySaplings",
+    harvest:"forestAutoHarvest",
+    sell:"forestAutoSell",
+    buySlots:"forestAutoBuySlots"
+  };
+  Object.entries(ids).forEach(([key,id])=>{
+    const el=document.getElementById(id);
+    if(el) el.checked=!!a[key];
+  });
+  const sel=document.getElementById("forestAutoTree");
+  if(sel) sel.value=a.selectedTree||"oak";
+}
+
+function renderForestFarm(){
+  if(!game || !game.forestFarm) return;
+  const shop=document.getElementById("forestTreeShop");
+  const slotsBox=document.getElementById("forestSlots");
+  const sapTotal=document.getElementById("forestSaplingTotal");
+  const woodTotal=document.getElementById("forestWoodTotal");
+  const slotTotal=document.getElementById("forestSlotTotal");
+  if(!shop || !slotsBox) return;
+
+  if(sapTotal) sapTotal.textContent=getForestSaplingTotal();
+  if(woodTotal) woodTotal.textContent=getForestWoodTotal();
+  if(slotTotal) slotTotal.textContent=game.forestFarm.slots.length;
+
+  const expandBtn=document.getElementById("forestExpandBtn");
+  if(expandBtn){
+    const nextPrice=getNextForestSlotPrice();
+    expandBtn.textContent=`+ 숲 칸 늘리기 (${money(nextPrice)}원)`;
+    expandBtn.disabled=game.money<nextPrice;
+    expandBtn.title=`다음 숲 칸 가격: ${money(nextPrice)}원`;
+  }
+
+  shop.innerHTML=Object.entries(FOREST_TREES).map(([id,tree])=>{
+    const sap=Number(game.forestFarm.saplings[id])||0;
+    const wood=Number(game.forestFarm.wood[id])||0;
+    return `
+      <div class="forest-card">
+        <div class="forest-name">${tree.icon} ${tree.name}</div>
+        <div class="forest-meta">
+          성장: ${tree.grow}초<br>
+          목재: ${tree.woodMin}~${tree.woodMax}개<br>
+          판매: 1개당 ${money(tree.woodPrice)}원<br>
+          묘목: ${money(tree.saplingPrice)}원 · 보유 ${sap}개
+        </div>
+        <div class="forest-row">
+          <button class="forest-btn" onclick="buyForestSapling('${id}')">🌱 묘목 구매</button>
+          <button class="forest-btn" onclick="plantForestTree('${id}', findEmptyForestSlot())">🌳 심기</button>
+        </div>
+        <div class="forest-wood">🪵 보유 목재: ${wood}개</div>
+        <button class="forest-btn" style="width:100%;margin-top:6px" onclick="sellForestWood('${id}')">💰 목재 전부 팔기</button>
+      </div>
+    `;
+  }).join("");
+
+  slotsBox.innerHTML=game.forestFarm.slots.map((slot,index)=>{
+    if(!slot){
+      return `<div class="forest-slot"><div class="forest-slot-icon">🟫</div><div class="forest-empty">빈 숲 칸<br>위에서 묘목을 선택해서 심어줘!</div></div>`;
+    }
+    const tree=forestTree(slot.id);
+    const left=Math.max(0,slot.readyAt-Date.now());
+    const ready=left<=0;
+    const progress=Math.min(100,Math.max(0,((tree.grow*1000-left)/(tree.grow*1000))*100));
+    return `
+      <div class="forest-slot">
+        <div class="forest-slot-icon">${tree.icon}</div>
+        <div class="forest-name">${tree.name}</div>
+        <div class="forest-meta">${ready?"✨ 벌목 가능":`🌱 ${Math.ceil(left/1000)}초 남음`}</div>
+        <div class="progress" style="margin-top:8px"><div style="width:${progress}%"></div></div>
+        <button class="forest-btn" style="width:100%;margin-top:8px" onclick="harvestForestTree(${index})" ${ready?"":"disabled"}>🪵 ${ready?"벌목하기":"자라는 중"}</button>
+      </div>
+    `;
+  }).join("");
+
+  syncForestAutoControls();
+}
+
+function findEmptyForestSlot(){
+  const idx=game.forestFarm.slots.findIndex(slot=>!slot);
+  if(idx<0){
+    showToast("숲 칸이 모두 찼어!");
+    return 0;
+  }
+  return idx;
+}
+
+function scrollToForestFarm(){
+  const el=document.getElementById("forestFarmPanel");
+  if(el) el.scrollIntoView({behavior:"smooth",block:"start"});
+}
+
+/* =========================================================
+   전체 렌더
+========================================================= */
+
+function renderAll(){
+
+  renderStats();
+
+  renderGacha();
+
+  renderPageTabs();
+
+  renderSeeds();
+
+  renderPlots();
+
+  renderCropBook();
+
+  renderFusionPanel();
+
+  renderForestFarm();
+
+  updateFarmAreaHeader();
+  updateFarmViewVisibility();
+
+  renderCropInfo();
+
+  renderMarket();
+
+  renderHarvest();
+
+}
+
+
+/* =========================================================
+   새로 시작
+========================================================= */
+
+function resetCurrentWorld(){
+
+  const current=
+    getCurrentWorld();
+
+
+  if(!current){
+
+    return;
+
+  }
+
+
+  if(
+    !confirm(
+      `"${current.name}" 월드를 처음부터 다시 시작할까?`
+    )
+  ){
+
+    return;
+
+  }
+
+
+  game=
+    createDefaultGame();
+
+
+  activePageIndex=
+    0;
+
+
+  lastMarketUpdate=
+    Date.now();
+
+
+  saveGame();
+
+
+  renderAll();
+
+  renderAutoPanel();
+
+  renderWorldList();
+
+
+  showToast(
+    "🔄 현재 월드를 처음부터 다시 시작했어!"
+  );
+
+}
+
+
+/* =========================================================
+   작물 선택
+========================================================= */
+
+function selectCrop(id){
+
+  selected=
+    id;
+
+
+  renderMarket();
+
+}
+
+
+/* =========================================================
+   루프
+========================================================= */
+
+setInterval(
+  ()=>{
+
+    const fusionChanged=
+      updateFusionMachine();
+
+
+    const marketChanged=
+      updateMarket(
+        false
+      );
+
+
+    runAllAuto();
+    runForestAuto();
+
+
+    if(
+      marketChanged
+    ){
+
+      runAutoSell();
+
+    }
+
+
+    renderStats();
+
+    renderGacha();
+
+    renderPlots();
+
+    renderSeeds();
+
+    renderHarvest();
+
+    renderForestFarm();
+
+    if(game.fusion && (game.fusion.input || game.fusion.ready)){
+      renderFusionPanel();
+    }
+
+
+    if(
+      marketChanged
+    ){
+
+      renderMarket();
+
+    }
+
+  },
+  500
+);
+
+
+/* =========================================================
+   시작
+========================================================= */
+
+initWorldSystem();
+
+renderWorldList();
+
+renderAll();
+updateFarmAreaHeader();
+updateFarmViewVisibility();
+renderAutoPanel();
+
+
+/* =========================================================
+   저장
+========================================================= */
+
+window.addEventListener(
+  "beforeunload",
+  saveGame
+);
+
+
+document.addEventListener(
+  "visibilitychange",
+  ()=>{
+
+    if(
+      !document.hidden
+    ){
+
+      updateMarket(false);
+
+      runAllAuto();
+
+      renderAll();
+
+    }else{
+
+      saveGame();
+
+    }
+
+  }
+);
+
+</script>
+
+
+
+<style>
+#gameWorldHomeButton {
+    position: fixed;
+    top: 14px;
+    right: 14px;
+    z-index: 999999;
+    border: 2px solid rgba(255,255,255,.95);
+    border-radius: 12px;
+    padding: 10px 15px;
+    background: rgba(28, 44, 53, .88);
+    color: #fff;
+    font-weight: 900;
+    font-size: 14px;
+    cursor: pointer;
+    box-shadow: 0 6px 18px rgba(0,0,0,.22);
+}
+#gameWorldHomeButton:hover { filter: brightness(1.08); }
+</style>
+<button id="gameWorldHomeButton" type="button" onclick="location.href='./index.html'">🏠 게임월드</button>
+
+</body>
+</html>
